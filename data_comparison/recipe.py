@@ -14,8 +14,6 @@ pd.options.mode.chained_assignment = None
 import numpy as np
 import matplotlib.pyplot as plt
 
-FULL_TIME_FORMAT = '%Y%m%d%H%M%S'
-
 def p2f(x):
     return float(x.strip('%')) / 100
 
@@ -46,8 +44,14 @@ def compare(path_to_config, config_file):
     standardised_date_format = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'STANDARDISED_DATE_FORMAT'
     ]
-    ga_band_prefix = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
-        'GA_BAND_PREFIX'
+    ga_band_prefix_rg0 = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_BAND_PREFIX_RG0'
+    ]
+    ga_band_prefix_rg1 = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_BAND_PREFIX_RG1'
+    ]
+    ga_band_lam_name = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_BAND_LAM_NAME'
     ]
     measurements_plot_type = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'MEASUREMENTS_PLOT_TYPE'
@@ -64,6 +68,7 @@ def compare(path_to_config, config_file):
     in_a_site = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_A_SITE']
     in_a_measurements_file = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_A_MEASUREMENTS_FILE']
     in_a_indices_file = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_A_INDICES_FILE']
+    in_a_site_path = in_a_data_path + '/' + in_a_prefix + '_' + in_a_source_name + '_' + in_a_satellite_name + '/'
 
     in_b_data_path = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_BASE']
     in_b_prefix = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_B_PREFIX']
@@ -89,7 +94,8 @@ def compare(path_to_config, config_file):
     print(products)
 
     for product in products:
-        in_a_site_path = in_a_data_path + '/' + in_a_prefix + '_' + in_a_source_name + '_' + in_a_satellite_name + '_' + product + '/'
+        if in_a_source_name.upper() == 'GA':
+            in_a_site_path = in_a_data_path + '/' + in_a_prefix + '_' + in_a_source_name + '_' + in_a_satellite_name + '_' + product + '/'
         print('Input A sites path: ' + in_a_site_path)
         print('Input A configured site: ' + (in_a_site or '~'))
         print('Input B sites path: ' + in_b_site_path)
@@ -132,7 +138,7 @@ def compare(path_to_config, config_file):
                                         skipinitialspace=False,
                                         quotechar='|',
                                         converters={'valid_pixel_percentage': p2f})
-                print(in_a_measurements_df)
+                #print(in_a_measurements_df)
             if in_b_measurements_path.is_file():
                 print('Making DataFrame from: ' + str(in_b_measurements_path))
                 in_b_measurements_df = pd.read_csv(in_b_measurements_path,
@@ -141,7 +147,7 @@ def compare(path_to_config, config_file):
                                         skipinitialspace=False,
                                         quotechar='|',
                                         converters={'valid_pixel_percentage': p2f})
-                print(in_b_measurements_df)
+                #print(in_b_measurements_df)
             if in_a_indices_path.is_file():
                 print('Making DataFrame from: ' + str(in_a_indices_path))
                 in_a_indices_df = pd.read_csv(in_a_indices_path,
@@ -150,7 +156,7 @@ def compare(path_to_config, config_file):
                                         skipinitialspace=False,
                                         quotechar='|',
                                         converters={'valid_pixel_percentage': p2f})
-                print(in_a_indices_df)
+                #print(in_a_indices_df)
             if in_b_indices_path.is_file():
                 print('Making DataFrame from: ' + str(in_b_indices_path))
                 in_b_indices_df = pd.read_csv(in_b_indices_path,
@@ -159,7 +165,7 @@ def compare(path_to_config, config_file):
                                         skipinitialspace=False,
                                         quotechar='|',
                                         converters={'valid_pixel_percentage': p2f})
-                print(in_b_indices_df)
+                #print(in_b_indices_df)
 
             date_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['DATE_COL']
             band_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['BAND_COL']
@@ -167,44 +173,48 @@ def compare(path_to_config, config_file):
             ga_bands = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_BANDS']]
             spectral_indices = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['SPECTRAL_INDICES']]
 
+            # Generate measurements plots.
             if in_a_measurements_df is not None and in_b_measurements_df is not None:
-                m_fig, m_axs = plt.subplots(len(ga_bands), 1, figsize=(12, 4), squeeze=False)
-                print(m_axs)
+                m_fig, m_axs = plt.subplots(len(ga_bands), 1, figsize=(12, 10), squeeze=False)
                 for idx_band, band in enumerate(ga_bands):
                     prefixed_band = band
                     if in_a_source_name.upper() == 'GA':
                         if prefixed_band.startswith(('satellite', 'solar')):
-                            prefixed_band = ga_band_prefix + '_oa_' + prefixed_band
+                            prefixed_band = ga_band_prefix_rg1 + '_oa_' + prefixed_band
+                        elif product.upper() == 'LAM':
+                            prefixed_band = ga_band_prefix_rg1 + '_' + ga_band_lam_name + '_' + prefixed_band
                         else:
-                            prefixed_band = ga_band_prefix + '_' + product + '_' + prefixed_band
-                    ga_measurements = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_BANDS'][band]]
-                    for measurement in ga_measurements:
+                            prefixed_band = ga_band_prefix_rg1 + '_' + product + '_' + prefixed_band
+                    measurements = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_BANDS'][band]]
+                    for measurement in measurements:
                         temp_a_df = in_a_measurements_df.loc[in_a_measurements_df[band_col] == prefixed_band]
                         temp_a_df.loc[
                             temp_a_df[
                                 'valid_pixel_percentage'] < in_a_measurements_min_valid_pixel_percentage, [measurement]] = np.nan
-                        print(temp_a_df)
+                        #print(temp_a_df)
                         temp_b_df = in_b_measurements_df.loc[in_b_measurements_df[band_col] == band]
                         temp_b_df.loc[
                             temp_b_df[
                                 'valid_pixel_percentage'] < in_b_measurements_min_valid_pixel_percentage, [measurement]] = np.nan
-                        print(temp_b_df)
+                        #print(temp_b_df)
                         ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=measurement, ax=m_axs[idx_band][0])
                         ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=measurement, ax=m_axs[idx_band][0])
                 #plt.show()
-                plot_target = out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
+                plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
                     '_vs_' + \
-                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/'
-                Path(os.path.dirname(plot_target.lower())).mkdir(parents=True, exist_ok=True)
+                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
+                print('Making plot output directory: ' + plot_target)
+                Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
                 plot_path = (plot_target + measurement + '_' + os.path.splitext(
                     in_a_measurements_file)[0]).lower() + '.png'
+                print('Writing plot image: ' + plot_path)
                 plt.savefig(plot_path)
 
+            # Generate indices plots.
             if in_a_indices_df is not None and in_b_indices_df is not None:
                 in_a_indices_df[date_col] = pd.to_datetime(in_a_indices_df[date_col], format=standardised_date_format).dt.date
                 in_b_indices_df[date_col] = pd.to_datetime(in_b_indices_df[date_col], format=standardised_date_format).dt.date
                 i_fig, i_axs = plt.subplots(len(spectral_indices), 1, figsize=(12, 4), squeeze=False)
-                print(i_axs)
                 for idx_spec_ind, spec_ind in enumerate(spectral_indices):
                     spec_ind_measurements = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
                         'SPECTRAL_INDICES'][spec_ind]]
@@ -214,24 +224,26 @@ def compare(path_to_config, config_file):
                             temp_a_df[
                                 'valid_pixel_percentage'] < in_a_indices_min_valid_pixel_percentage, [measurement]] = np.nan
                         temp_a_df.loc[temp_a_df[measurement] == '--', [measurement]] = np.nan
-                        print(temp_a_df)
+                        #print(temp_a_df)
                         temp_b_df = in_b_indices_df.loc[in_b_indices_df[indices_col] == spec_ind]
                         temp_b_df.loc[
                             temp_b_df[
                                 'valid_pixel_percentage'] < in_b_indices_min_valid_pixel_percentage, [measurement]] = np.nan
                         temp_b_df.loc[temp_b_df[measurement] == '--', [measurement]] = np.nan
-                        print(temp_b_df)
+                        #print(temp_b_df)
                         temp_a_df[measurement] = pd.to_numeric(temp_a_df[measurement])
                         temp_b_df[measurement] = pd.to_numeric(temp_b_df[measurement])
                         ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, ax=i_axs[idx_spec_ind][0])
                         ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, ax=i_axs[idx_spec_ind][0])
                 #plt.show()
-                plot_target = out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
+                plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
                     '_vs_' + \
-                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/'
-                Path(os.path.dirname(plot_target.lower())).mkdir(parents=True, exist_ok=True)
+                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
+                print('Making plot output directory: ' + plot_target)
+                Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
                 plot_path = (plot_target + spec_ind + '_' + os.path.splitext(
                     in_a_indices_file)[0]).lower() + '.png'
+                print('Writing plot image: ' + plot_path)
                 plt.savefig(plot_path)
 
     if next_subproject_name is not None:
