@@ -1,0 +1,89 @@
+---
+APP_NAME: Intercomparison SR ARD Visualisations
+LOG_FILE: /Users/joejelbart/Documents/workspace/log/ga_interc/activity.log
+APP_SOURCE:
+    ROOT: /Users/joejelbart/Documents/workspace/ga_interc
+    SUBPROJECTS:
+        configuration_controller:
+            INTERFACE:
+                ENTRY: ~
+                NEXT_ENTRY_SUBPROJECT: ~
+            DATA:
+                IN: ~
+                OUT: ~
+        data_comparison:
+            MODULE: recipe
+            INTERFACE:
+                ENTRY: compare
+                NEXT_ENTRY_SUBPROJECT: ~
+            DATA:
+                
+                # Data input base directory.
+                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc
+                
+                # Data input A for comparison.
+                # Note: if using GA as a source, it should be input A.
+                # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
+                IN_A_PREFIX: plottable
+                IN_A_SOURCE_NAME: ga
+                IN_A_SATELLITE_NAME: ls8
+                IN_A_PRODUCT: ~ #nbar
+                IN_A_SITE: ~ #Site_2
+                IN_A_MEASUREMENTS_FILE: Measurements.csv
+                IN_A_INDICES_FILE: indices.csv
+                
+                # 0-1
+                IN_A_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 0
+                IN_A_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 0
+                
+                # Data input B for comparison.
+                IN_B_PREFIX: plottable
+                IN_B_SOURCE_NAME: usgs
+                IN_B_SATELLITE_NAME: ls8
+                IN_B_PRODUCT: ~
+                IN_B_SITE: ~
+                IN_B_MEASUREMENTS_FILE: Measurements.csv
+                IN_B_INDICES_FILE: indices.csv
+
+                # 0-1
+                IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 0
+                IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 0
+                
+                # Visualisation (plot) output base directory.
+                OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
+
+                STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
+
+                # A to B product band name mapping.
+                GA_ALGORITHMS:
+                    #- LAM
+                    nbar: NBAR
+                    #- NBART
+                GA_BANDS:
+                    coastal_aerosol:
+                        Mean_sr: Mean SR
+                    #blue:
+                    #    Variance_sr: Variance SR
+                    #- green
+                    #- red
+                    nir:
+                        Mean_sr: Mean SR
+                    #- swir_1
+                    #- swir_2
+                    satellite_azimuth:
+                        Mean_sr: Mean SR
+                    solar_zenith:
+                        Mean_sr: Mean SR
+                GA_BAND_PREFIX: rg1
+                SPECTRAL_INDICES:
+                    NDVI:
+                        NDVI_value: NDVI
+                DATE_COL: Date
+                BAND_COL: Band
+                INDICES_COL: Spectral_indices
+                MEASUREMENTS_PLOT_TYPE: line
+                INDICES_PLOT_TYPE: line
+                MEASUREMENTS_FIG_SIZE: ~ #not yet implemented
+                INDICES_FIG_SIZE: ~ #not yet implemented
+    MAIN: data_comparison
+    DATA_RECORD_MAX_LIMIT: ~
