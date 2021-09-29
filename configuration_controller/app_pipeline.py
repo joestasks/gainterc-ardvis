@@ -116,16 +116,16 @@ if __name__ == "__main__":
         print('Configuration Module: ' + sys.argv[1])
         print('Configuration File: ' + sys.argv[2])
     except IndexError as err:
-        print('ERROR: ' + str(err))
+        print('Help:')
         print(u"***\n"
               u"First argument must be the relative path to a configuration"
-              u" module with a full set of configuration files.\n"
-              u"Second argument must be the main configuration file to use"
-              u" (defaults to global.yml).\n"
+              u" module (directory) containing a configuration file.\n"
+              u"Second argument is the name of the configuration file,"
+              u" which defaults to global.yml.\n\n"
               u"Usage:\n"
-              u"python ./configuration_controller/app_pipeline.py"
+              u"    python ./configuration_controller/app_pipeline.py"
               u" configuration_controller global.yml\n"
-              u"***")
+              u"***\n")
         sys.exit(1)
     finally:
         print('Starting Pipeline...')
