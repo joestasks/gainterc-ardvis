@@ -1,6 +1,6 @@
 ---
 APP_NAME: Intercomparison SR ARD Visualisations
-LOG_FILE: /Users/joejelbart/Documents/workspace/log/ga_interc/activity.log
+LOG_FILE: /Users/joejelbart/Documents/workspace/log/ga_interc/activity.log #not yet implemented
 APP_SOURCE:
     ROOT: /Users/joejelbart/Documents/workspace/gainterc-ardvis
     SUBPROJECTS:
@@ -67,7 +67,7 @@ APP_SOURCE:
                 GA_BAND_LAM_NAME: lambertian
                 SPECTRAL_INDICES:
                     NDVI:
-                        NDVI_value: NDVI
+                        NDVI_value: NDVI value
                 DATE_COL: Date
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
@@ -155,9 +155,21 @@ APP_SOURCE:
 #                                        ESA_S2AB: B12_20m
 #                        PLOT:
 #                            Mean_sr: Mean SR
-#                #    satellite_azimuth:
-#                #        Mean_sr: Mean SR
-#                #    solar_zenith:
-#                #        Mean_sr: Mean SR
+                    satellite_azimuth:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        GA: rg1_oa_satellite_azimuth
+                        PLOT:
+                            Mean_sr: Mean SR
+                    solar_zenith:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        GA: rg1_oa_solar_zenith
+                        PLOT:
+                            Mean_sr: Mean SR
     MAIN: data_comparison
     DATA_RECORD_MAX_LIMIT: ~

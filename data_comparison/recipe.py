@@ -196,6 +196,8 @@ def compare(path_to_config, config_file):
                 for idx_band, band in enumerate(ga_bands):
                     band_prefixes = [*ga_band_mappings[band]['PREFIXES']]
                     band_plot_props = [*ga_band_mappings[band]['PLOT']]
+                    if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
+                        b_band_lookup_key = 'GA'
                     for band_prefix in band_prefixes:
                         band_suffixes = [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES']]
                         for band_suffix in band_suffixes:
@@ -210,7 +212,7 @@ def compare(path_to_config, config_file):
                                 plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
 
                                 if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
-                                    a_band_mut = band_prefix + '_oa_' + band
+                                    a_band_mut = band_prefix + 'oa_' + band
                                     band_mutations.pop()
                                     plot_measurements.pop()
                                     if len(oa_band_mutations) > 0:
@@ -221,6 +223,10 @@ def compare(path_to_config, config_file):
 
                 band_mutations = band_mutations + oa_band_mutations
                 plot_measurements = plot_measurements + oa_plot_measurements
+                #print(oa_band_mutations)
+                #print(len(oa_band_mutations))
+                #print(oa_plot_measurements)
+                #print(len(oa_plot_measurements))
                 #print(band_mutations)
                 #print(len(band_mutations))
                 #print(plot_measurements)
@@ -238,6 +244,7 @@ def compare(path_to_config, config_file):
                         temp_a_df[
                             'valid_pixel_percentage'] < in_a_measurements_min_valid_pixel_percentage, [plot_measurements[idx_band_ab][0]]] = np.nan
                     #print(temp_a_df)
+                    #if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
                     temp_b_df = in_b_measurements_df.loc[in_b_measurements_df[band_col] == band_ab[1]]
                     temp_b_df.loc[
                         temp_b_df[
@@ -265,8 +272,8 @@ def compare(path_to_config, config_file):
                     )
                     temp_a_df.to_csv(plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                     temp_b_df.to_csv(plot_target + band_ab[1].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][0] + ' ' + in_a_source_name, ax=m_axs[idx_band_ab][0])
-                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][0] + ' ' + in_b_source_name, ax=m_axs[idx_band_ab][0])
+                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_a_source_name, ax=m_axs[idx_band_ab][0])
+                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_b_source_name, ax=m_axs[idx_band_ab][0])
                 #plt.show()
                 plot_path = (plot_target + os.path.splitext(
                     in_a_measurements_file)[0]).lower() + '.png'
@@ -322,8 +329,9 @@ def compare(path_to_config, config_file):
                         )
                         temp_a_df.to_csv(plot_target + spec_ind.lower() + '_' + measurement.lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                         temp_b_df.to_csv(plot_target + spec_ind.lower() + '_' + measurement.lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-                        ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement + ' ' + in_a_source_name, ax=i_axs[idx_spec_ind][0])
-                        ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement + ' ' + in_b_source_name, ax=i_axs[idx_spec_ind][0])
+                        measurement_label = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['SPECTRAL_INDICES'][spec_ind][measurement]
+                        ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement_label + ' ' + in_a_source_name, ax=i_axs[idx_spec_ind][0])
+                        ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement_label + ' ' + in_b_source_name, ax=i_axs[idx_spec_ind][0])
                 #plt.show()
                 plot_path = (plot_target + os.path.splitext(
                     in_a_indices_file)[0]).lower() + '.png'
