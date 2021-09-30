@@ -61,6 +61,7 @@ def compare(path_to_config, config_file):
     indices_plot_type = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'INDICES_PLOT_TYPE'
     ]
+    plot_style = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['PLOT_STYLE']
     spectral_indices = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['SPECTRAL_INDICES']]
     date_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['DATE_COL']
     band_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['BAND_COL']
@@ -270,6 +271,7 @@ def compare(path_to_config, config_file):
                 plot_path = (plot_target + os.path.splitext(
                     in_a_measurements_file)[0]).lower() + '.png'
                 print('Writing plot image: ' + plot_path)
+                plt.style.use(plot_style)
                 m_fig.autofmt_xdate()
                 plt.savefig(plot_path)
 
@@ -281,7 +283,6 @@ def compare(path_to_config, config_file):
                 print('Making plot output directory: ' + plot_target)
                 Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
                 i_fig, i_axs = plt.subplots(len(spectral_indices), 1, figsize=(12, 4), squeeze=False)
-                #plt.style.use('seaborn')
                 for idx_spec_ind, spec_ind in enumerate(spectral_indices):
                     spec_ind_measurements = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
                         'SPECTRAL_INDICES'][spec_ind]]
@@ -327,6 +328,7 @@ def compare(path_to_config, config_file):
                 plot_path = (plot_target + os.path.splitext(
                     in_a_indices_file)[0]).lower() + '.png'
                 print('Writing plot image: ' + plot_path)
+                plt.style.use(plot_style)
                 i_fig.autofmt_xdate()
                 plt.savefig(plot_path)
 
