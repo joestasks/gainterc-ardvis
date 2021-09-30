@@ -44,6 +44,14 @@ def compare(path_to_config, config_file):
     standardised_date_format = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'STANDARDISED_DATE_FORMAT'
     ]
+    plot_start_date = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'PLOT_START_DATE'
+    ]
+    plot_start_date = np.datetime64(plot_start_date)
+    plot_end_date = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'PLOT_END_DATE'
+    ]
+    plot_end_date = np.datetime64(plot_end_date)
     ga_band_lam_name = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'GA_BAND_LAM_NAME'
     ]
@@ -137,6 +145,8 @@ def compare(path_to_config, config_file):
                                         sep=',',
                                         skipinitialspace=False,
                                         quotechar='|',
+                                        #parse_dates=[date_col],
+                                        #index_col=[date_col],
                                         converters={'valid_pixel_percentage': p2f})
                 #print(in_a_measurements_df)
             if in_b_measurements_path.is_file():
@@ -146,6 +156,8 @@ def compare(path_to_config, config_file):
                                         sep=',',
                                         skipinitialspace=False,
                                         quotechar='|',
+                                        #parse_dates=[date_col],
+                                        #index_col=[date_col],
                                         converters={'valid_pixel_percentage': p2f})
                 #print(in_b_measurements_df)
             if in_a_indices_path.is_file():
@@ -155,6 +167,8 @@ def compare(path_to_config, config_file):
                                         sep=',',
                                         skipinitialspace=False,
                                         quotechar='|',
+                                        #parse_dates=[date_col],
+                                        #index_col=[date_col],
                                         converters={'valid_pixel_percentage': p2f})
                 #print(in_a_indices_df)
             if in_b_indices_path.is_file():
@@ -164,6 +178,8 @@ def compare(path_to_config, config_file):
                                         sep=',',
                                         skipinitialspace=False,
                                         quotechar='|',
+                                        #parse_dates=[date_col],
+                                        #index_col=[date_col],
                                         converters={'valid_pixel_percentage': p2f})
                 #print(in_b_indices_df)
 
@@ -188,7 +204,7 @@ def compare(path_to_config, config_file):
                                 if band_suffix != 'Empty':
                                     a_band_mut = a_band_mut + band_suffix
                                 if in_a_source_name.upper() == 'GA' and product.upper() == 'LAM':
-                                    a_band_mut = band_prefix + '_' + ga_band_lam_name + '_' + band
+                                    a_band_mut = band_prefix + ga_band_lam_name + '_' + band
                                 band_mutations.append([a_band_mut, b_band_mut])
                                 plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
 
@@ -204,11 +220,16 @@ def compare(path_to_config, config_file):
 
                 band_mutations = band_mutations + oa_band_mutations
                 plot_measurements = plot_measurements + oa_plot_measurements
-                print(band_mutations)
-                print(len(band_mutations))
-                print(plot_measurements)
-                print(len(plot_measurements))
+                #print(band_mutations)
+                #print(len(band_mutations))
+                #print(plot_measurements)
+                #print(len(plot_measurements))
 
+                plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
+                    '_vs_' + \
+                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
+                print('Making plot output directory: ' + plot_target)
+                Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
                 m_fig, m_axs = plt.subplots(len(band_mutations), 1, figsize=(12, 10), squeeze=False)
                 for idx_band_ab, band_ab in enumerate(band_mutations):
                     temp_a_df = in_a_measurements_df.loc[in_a_measurements_df[band_col] == band_ab[0]]
@@ -221,24 +242,46 @@ def compare(path_to_config, config_file):
                         temp_b_df[
                             'valid_pixel_percentage'] < in_b_measurements_min_valid_pixel_percentage, [plot_measurements[idx_band_ab][0]]] = np.nan
                     #print(temp_b_df)
-                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], ax=m_axs[idx_band_ab][0])
-                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], ax=m_axs[idx_band_ab][0])
+                    temp_a_df = temp_a_df[temp_a_df[plot_measurements[idx_band_ab][0]].notna()]
+                    temp_b_df = temp_b_df[temp_b_df[plot_measurements[idx_band_ab][0]].notna()]
+                    temp_a_df[plot_measurements[idx_band_ab][0]] = pd.to_numeric(temp_a_df[plot_measurements[idx_band_ab][0]])
+                    temp_b_df[plot_measurements[idx_band_ab][0]] = pd.to_numeric(temp_b_df[plot_measurements[idx_band_ab][0]])
+                    temp_a_df[date_col] = pd.to_datetime(temp_a_df[date_col], format=standardised_date_format) #.dt.date
+                    temp_b_df[date_col] = pd.to_datetime(temp_b_df[date_col], format=standardised_date_format) #.dt.date
+                    #temp_a_df.set_index(date_col, inplace=True)
+                    #temp_b_df.set_index(date_col, inplace=True)
+                    #print(temp_a_df.dtypes)
+                    #print(temp_a_df)
+                    #print(temp_b_df.dtypes)
+                    #print(temp_b_df)
+                    m_axs[idx_band_ab][0].set(
+                        xlabel=date_col,
+                        ylabel=band_ab[0],
+                        title=in_a_source_name + ' ' + in_a_satellite_name + \
+                            ' VS ' + \
+                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' ' + band_ab[0] + ' at ' + site,
+                            xlim=[plot_start_date, plot_end_date]
+                    )
+                    temp_a_df.to_csv(plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    temp_b_df.to_csv(plot_target + band_ab[1].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][0] + ' ' + in_a_source_name, ax=m_axs[idx_band_ab][0])
+                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][0] + ' ' + in_b_source_name, ax=m_axs[idx_band_ab][0])
                 #plt.show()
+                plot_path = (plot_target + os.path.splitext(
+                    in_a_measurements_file)[0]).lower() + '.png'
+                print('Writing plot image: ' + plot_path)
+                m_fig.autofmt_xdate()
+                plt.savefig(plot_path)
+
+            # Generate indices plots.
+            if in_a_indices_df is not None and in_b_indices_df is not None:
                 plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
                     '_vs_' + \
                     in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
                 print('Making plot output directory: ' + plot_target)
                 Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
-                plot_path = (plot_target + os.path.splitext(
-                    in_a_measurements_file)[0]).lower() + '.png'
-                print('Writing plot image: ' + plot_path)
-                plt.savefig(plot_path)
-
-            # Generate indices plots.
-            if in_a_indices_df is not None and in_b_indices_df is not None:
-                in_a_indices_df[date_col] = pd.to_datetime(in_a_indices_df[date_col], format=standardised_date_format).dt.date
-                in_b_indices_df[date_col] = pd.to_datetime(in_b_indices_df[date_col], format=standardised_date_format).dt.date
                 i_fig, i_axs = plt.subplots(len(spectral_indices), 1, figsize=(12, 4), squeeze=False)
+                #plt.style.use('seaborn')
                 for idx_spec_ind, spec_ind in enumerate(spectral_indices):
                     spec_ind_measurements = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
                         'SPECTRAL_INDICES'][spec_ind]]
@@ -255,19 +298,36 @@ def compare(path_to_config, config_file):
                                 'valid_pixel_percentage'] < in_b_indices_min_valid_pixel_percentage, [measurement]] = np.nan
                         temp_b_df.loc[temp_b_df[measurement] == '--', [measurement]] = np.nan
                         #print(temp_b_df)
+
+                        temp_a_df = temp_a_df[temp_a_df[measurement].notna()]
+                        temp_b_df = temp_b_df[temp_b_df[measurement].notna()]
                         temp_a_df[measurement] = pd.to_numeric(temp_a_df[measurement])
                         temp_b_df[measurement] = pd.to_numeric(temp_b_df[measurement])
-                        ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, ax=i_axs[idx_spec_ind][0])
-                        ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, ax=i_axs[idx_spec_ind][0])
+                        temp_a_df[date_col] = pd.to_datetime(temp_a_df[date_col], format=standardised_date_format) #.dt.date
+                        temp_b_df[date_col] = pd.to_datetime(temp_b_df[date_col], format=standardised_date_format) #.dt.date
+                        #temp_a_df.set_index(date_col, inplace=True)
+                        #temp_b_df.set_index(date_col, inplace=True)
+                        #print(temp_a_df.dtypes)
+                        #print(temp_a_df)
+                        #print(temp_b_df.dtypes)
+                        #print(temp_b_df)
+                        i_axs[idx_spec_ind][0].set(
+                            xlabel=date_col,
+                            ylabel=spec_ind,
+                            title=in_a_source_name + ' ' + in_a_satellite_name + \
+                                ' VS ' + \
+                                in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' at ' + site,
+                                xlim=[plot_start_date, plot_end_date]
+                        )
+                        temp_a_df.to_csv(plot_target + spec_ind.lower() + '_' + measurement.lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                        temp_b_df.to_csv(plot_target + spec_ind.lower() + '_' + measurement.lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                        ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement + ' ' + in_a_source_name, ax=i_axs[idx_spec_ind][0])
+                        ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement + ' ' + in_b_source_name, ax=i_axs[idx_spec_ind][0])
                 #plt.show()
-                plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
-                    '_vs_' + \
-                    in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
-                print('Making plot output directory: ' + plot_target)
-                Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
                 plot_path = (plot_target + os.path.splitext(
                     in_a_indices_file)[0]).lower() + '.png'
                 print('Writing plot image: ' + plot_path)
+                i_fig.autofmt_xdate()
                 plt.savefig(plot_path)
 
     if next_subproject_name is not None:
