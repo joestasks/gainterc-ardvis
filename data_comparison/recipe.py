@@ -64,14 +64,34 @@ def compare(path_to_config, config_file):
     indices_plot_type = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'INDICES_PLOT_TYPE'
     ]
-    plot_style = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['PLOT_STYLE']
-    spectral_indices = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['SPECTRAL_INDICES']]
-    date_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['DATE_COL']
-    band_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['BAND_COL']
-    indices_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['INDICES_COL']
-    ga_oa_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_OA_MAPPINGS']
+    measurements_plot_y_label = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'MEASUREMENTS_PLOT_Y_LABEL'
+    ]
+    oa_plot_y_label = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'OA_PLOT_Y_LABEL'
+    ]
+    plot_style = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'PLOT_STYLE'
+    ]
+    spectral_indices = [*app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'SPECTRAL_INDICES'
+    ]]
+    date_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'DATE_COL'
+    ]
+    band_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'BAND_COL'
+    ]
+    indices_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'INDICES_COL'
+    ]
+    ga_oa_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_OA_MAPPINGS'
+    ]
     ga_oas = [*ga_oa_mappings]
-    ga_band_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_BAND_MAPPINGS']
+    ga_band_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_BAND_MAPPINGS'
+    ]
     ga_bands = [*ga_band_mappings]
 
     in_a_data_path = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['IN_BASE']
@@ -108,6 +128,7 @@ def compare(path_to_config, config_file):
     print(products)
 
     for product in products:
+        product_label = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_ALGORITHMS'][product]
         if in_a_source_name.upper() == 'GA':
             in_a_site_path = in_a_data_path + '/' + in_a_prefix + '_' + in_a_source_name + '_' + in_a_satellite_name + '_' + product + '/'
         print('Input A sites path: ' + in_a_site_path)
@@ -205,6 +226,8 @@ def compare(path_to_config, config_file):
                 for band in ga_oas_and_bands:
                     band_prefixes = [*ga_band_mappings[band]['PREFIXES']]
                     band_plot_props = [*ga_band_mappings[band]['PLOT']]
+                    a_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_a_source_name)
+                    a_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (a_band_lookup_key))(in_a_source_name)
                     b_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_b_source_name)
                     b_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key))(in_b_source_name)
                     if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
@@ -214,6 +237,8 @@ def compare(path_to_config, config_file):
                         for band_suffix in band_suffixes:
                             if b_band_lookup_key in [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix]]:
                                 a_band_mut = band_prefix + product.lower() + '_' + band
+                                if a_band_lookup_key in [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix]]:
+                                    a_band_mut = ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix][a_band_lookup_key]
                                 b_band_mut = ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix][b_band_lookup_key]
                                 if in_a_source_name.upper() == 'GA' and product.upper() == 'LAM':
                                     a_band_mut = band_prefix + ga_band_lam_name + '_' + band
@@ -295,28 +320,31 @@ def compare(path_to_config, config_file):
                     #print(temp_b_df)
                     m_axs[0][0].set(
                         xlabel=date_col,
-                        ylabel=band_ab[0],
+                        ylabel=measurements_plot_y_label,
                         title=in_a_source_name + ' ' + in_a_satellite_name + \
                             ' VS ' + \
-                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' at ' + site,
+                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product_label + ' at ' + site,
                             xlim=[plot_start_date, plot_end_date]
                     )
+                    ga_product_label = ''
+                    if in_a_source_name.upper() == 'GA':
+                        ga_product_label = ' ' + product_label
                     temp_a_df.to_csv(plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                     temp_b_df.to_csv(plot_target + band_ab[1].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_a_source_name, ax=m_axs[0][0])
+                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_a_source_name + ga_product_label, ax=m_axs[0][0])
                     ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_b_source_name, ax=m_axs[0][0])
 
                     if oa_temp_a_df is not None and oa_temp_b_df is not None:
                         m_axs[1][0].set(
                             xlabel=date_col,
-                            ylabel=ga_band_oa_name.upper(),
+                            ylabel=oa_plot_y_label,
                             title=in_a_source_name + ' ' + in_a_satellite_name + \
                                 ' VS ' + \
-                                in_a_source_name + ' ' + in_a_satellite_name + ' for ' + product + ' at ' + site,
+                                in_a_source_name + ' ' + in_a_satellite_name + ' for ' + product_label + ' at ' + site,
                                 xlim=[plot_start_date, plot_end_date]
                         )
-                        ax = oa_temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][0], ax=m_axs[1][0], sharex=m_axs[0][0])
-                        ax = oa_temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][1], ax=m_axs[1][0], sharex=m_axs[0][0])
+                        ax = oa_temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][0][7:], ax=m_axs[1][0], sharex=m_axs[0][0])
+                        ax = oa_temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][1][7:], ax=m_axs[1][0], sharex=m_axs[0][0])
 
                     plot_path = (plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + os.path.splitext(
                         in_a_measurements_file)[0]).lower() + '.png'

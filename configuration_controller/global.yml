@@ -52,12 +52,17 @@ APP_SOURCE:
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
+                DATE_FILTERING: True #not yet implemented
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
                 PLOT_START_DATE: "2019-01-01"
                 PLOT_END_DATE: "2022-01-01"
                 PLOT_STYLE: seaborn
                 MEASUREMENTS_PLOT_TYPE: line
                 INDICES_PLOT_TYPE: line
+                MEASUREMENTS_PLOT_Y_LABEL: Surface Reflectance * 10000
+                OA_PLOT_Y_LABEL: Degrees
+                MEASUREMENTS_FIG_SIZE: ~ #not yet implemented
+                INDICES_FIG_SIZE: ~ #not yet implemented
 
                 # A to B product band name mapping.
                 GA_ALGORITHMS:
@@ -72,8 +77,6 @@ APP_SOURCE:
                 DATE_COL: Date
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
-                MEASUREMENTS_FIG_SIZE: ~ #not yet implemented
-                INDICES_FIG_SIZE: ~ #not yet implemented
                 GA_OA_MAPPINGS:
                     satellite_azimuth:
                         PREFIXES:
