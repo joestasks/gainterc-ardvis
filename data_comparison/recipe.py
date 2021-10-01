@@ -55,6 +55,9 @@ def compare(path_to_config, config_file):
     ga_band_lam_name = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'GA_BAND_LAM_NAME'
     ]
+    ga_band_oa_name = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
+        'GA_BAND_OA_NAME'
+    ]
     measurements_plot_type = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA'][
         'MEASUREMENTS_PLOT_TYPE'
     ]
@@ -66,6 +69,8 @@ def compare(path_to_config, config_file):
     date_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['DATE_COL']
     band_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['BAND_COL']
     indices_col = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['INDICES_COL']
+    ga_oa_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_OA_MAPPINGS']
+    ga_oas = [*ga_oa_mappings]
     ga_band_mappings = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['GA_BAND_MAPPINGS']
     ga_bands = [*ga_band_mappings]
 
@@ -186,16 +191,22 @@ def compare(path_to_config, config_file):
 
             # Generate measurements plots.
             if in_a_measurements_df is not None and in_b_measurements_df is not None:
+                oa_temp_a_df = None
+                oa_temp_b_df = None
                 band_mutations = []
                 oa_band_mutations = []
                 plot_measurements = []
                 oa_plot_measurements = []
-                b_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_b_source_name)
-                b_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key))(in_b_source_name)
+                ga_oas_and_bands = ga_oas + ga_bands
+                ga_band_mappings = {**ga_oa_mappings, **ga_band_mappings}
+                #print(ga_oas_and_bands)
+                #print(ga_band_mappings)
 
-                for idx_band, band in enumerate(ga_bands):
+                for band in ga_oas_and_bands:
                     band_prefixes = [*ga_band_mappings[band]['PREFIXES']]
                     band_plot_props = [*ga_band_mappings[band]['PLOT']]
+                    b_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_b_source_name)
+                    b_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key))(in_b_source_name)
                     if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
                         b_band_lookup_key = 'GA'
                     for band_prefix in band_prefixes:
@@ -204,25 +215,24 @@ def compare(path_to_config, config_file):
                             if b_band_lookup_key in [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix]]:
                                 a_band_mut = band_prefix + product.lower() + '_' + band
                                 b_band_mut = ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix][b_band_lookup_key]
-                                if band_suffix != 'Empty':
-                                    a_band_mut = a_band_mut + band_suffix
                                 if in_a_source_name.upper() == 'GA' and product.upper() == 'LAM':
                                     a_band_mut = band_prefix + ga_band_lam_name + '_' + band
-                                band_mutations.append([a_band_mut, b_band_mut])
-                                plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
+                                if band_suffix != 'Empty':
+                                    a_band_mut = a_band_mut + band_suffix
 
                                 if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
-                                    a_band_mut = band_prefix + 'oa_' + band
-                                    band_mutations.pop()
-                                    plot_measurements.pop()
+                                    a_band_mut = band_prefix + ga_band_oa_name + '_' + band
                                     if len(oa_band_mutations) > 0:
                                         oa_band_mutations[0][1] = a_band_mut
                                     else:
                                         oa_band_mutations.append([a_band_mut, b_band_mut])
                                         oa_plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
+                                else:
+                                    band_mutations.append([a_band_mut, b_band_mut])
+                                    plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
 
-                band_mutations = band_mutations + oa_band_mutations
-                plot_measurements = plot_measurements + oa_plot_measurements
+                #band_mutations = band_mutations + oa_band_mutations
+                #plot_measurements = plot_measurements + oa_plot_measurements
                 #print(oa_band_mutations)
                 #print(len(oa_band_mutations))
                 #print(oa_plot_measurements)
@@ -232,19 +242,40 @@ def compare(path_to_config, config_file):
                 #print(plot_measurements)
                 #print(len(plot_measurements))
 
+                plt.style.use(plot_style)
                 plot_target = (out_path + '/' + in_a_source_name + '_' + in_a_satellite_name + \
                     '_vs_' + \
                     in_b_source_name + '_' + in_b_satellite_name + '/' + product + '/' + site + '/').lower()
                 print('Making plot output directory: ' + plot_target)
                 Path(os.path.dirname(plot_target)).mkdir(parents=True, exist_ok=True)
-                m_fig, m_axs = plt.subplots(len(band_mutations), 1, figsize=(12, 10), squeeze=False)
+
+                if len(oa_band_mutations) > 0 and (oa_temp_a_df is None or oa_temp_b_df is None):
+                    oa_temp_a_df = in_a_measurements_df.loc[in_a_measurements_df[band_col] == oa_band_mutations[0][0]]
+                    oa_temp_a_df.loc[
+                        oa_temp_a_df[
+                            'valid_pixel_percentage'] < in_a_measurements_min_valid_pixel_percentage, [oa_plot_measurements[0][0]]] = np.nan
+                    #print(oa_temp_a_df)
+                    oa_temp_b_df = in_a_measurements_df.loc[in_a_measurements_df[band_col] == oa_band_mutations[0][1]]
+                    oa_temp_b_df.loc[
+                        oa_temp_b_df[
+                            'valid_pixel_percentage'] < in_b_measurements_min_valid_pixel_percentage, [oa_plot_measurements[0][0]]] = np.nan
+                    #print(oa_temp_b_df)
+                    oa_temp_a_df = oa_temp_a_df[oa_temp_a_df[oa_plot_measurements[0][0]].notna()]
+                    oa_temp_b_df = oa_temp_b_df[oa_temp_b_df[oa_plot_measurements[0][0]].notna()]
+                    oa_temp_a_df[oa_plot_measurements[0][0]] = pd.to_numeric(oa_temp_a_df[oa_plot_measurements[0][0]])
+                    oa_temp_b_df[oa_plot_measurements[0][0]] = pd.to_numeric(oa_temp_b_df[oa_plot_measurements[0][0]])
+                    oa_temp_a_df[date_col] = pd.to_datetime(oa_temp_a_df[date_col], format=standardised_date_format) #.dt.date
+                    oa_temp_b_df[date_col] = pd.to_datetime(oa_temp_b_df[date_col], format=standardised_date_format) #.dt.date
+                    oa_temp_a_df.to_csv(plot_target + oa_band_mutations[0][0].lower() + '_' + oa_plot_measurements[0][0].lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    oa_temp_b_df.to_csv(plot_target + oa_band_mutations[0][1].lower() + '_' + oa_plot_measurements[0][0].lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+
                 for idx_band_ab, band_ab in enumerate(band_mutations):
+                    m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
                     temp_a_df = in_a_measurements_df.loc[in_a_measurements_df[band_col] == band_ab[0]]
                     temp_a_df.loc[
                         temp_a_df[
                             'valid_pixel_percentage'] < in_a_measurements_min_valid_pixel_percentage, [plot_measurements[idx_band_ab][0]]] = np.nan
                     #print(temp_a_df)
-                    #if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
                     temp_b_df = in_b_measurements_df.loc[in_b_measurements_df[band_col] == band_ab[1]]
                     temp_b_df.loc[
                         temp_b_df[
@@ -262,25 +293,37 @@ def compare(path_to_config, config_file):
                     #print(temp_a_df)
                     #print(temp_b_df.dtypes)
                     #print(temp_b_df)
-                    m_axs[idx_band_ab][0].set(
+                    m_axs[0][0].set(
                         xlabel=date_col,
                         ylabel=band_ab[0],
                         title=in_a_source_name + ' ' + in_a_satellite_name + \
                             ' VS ' + \
-                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' ' + band_ab[0] + ' at ' + site,
+                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' at ' + site,
                             xlim=[plot_start_date, plot_end_date]
                     )
                     temp_a_df.to_csv(plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                     temp_b_df.to_csv(plot_target + band_ab[1].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_a_source_name, ax=m_axs[idx_band_ab][0])
-                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_b_source_name, ax=m_axs[idx_band_ab][0])
-                #plt.show()
-                plot_path = (plot_target + os.path.splitext(
-                    in_a_measurements_file)[0]).lower() + '.png'
-                print('Writing plot image: ' + plot_path)
-                plt.style.use(plot_style)
-                m_fig.autofmt_xdate()
-                plt.savefig(plot_path)
+                    ax = temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_a_source_name, ax=m_axs[0][0])
+                    ax = temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[idx_band_ab][1] + ' ' + in_b_source_name, ax=m_axs[0][0])
+
+                    if oa_temp_a_df is not None and oa_temp_b_df is not None:
+                        m_axs[1][0].set(
+                            xlabel=date_col,
+                            ylabel=ga_band_oa_name.upper(),
+                            title=in_a_source_name + ' ' + in_a_satellite_name + \
+                                ' VS ' + \
+                                in_a_source_name + ' ' + in_a_satellite_name + ' for ' + product + ' at ' + site,
+                                xlim=[plot_start_date, plot_end_date]
+                        )
+                        ax = oa_temp_a_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][0], ax=m_axs[1][0], sharex=m_axs[0][0])
+                        ax = oa_temp_b_df.plot(kind=measurements_plot_type, x=date_col, y=oa_plot_measurements[0][0], label=oa_plot_measurements[0][1] + ' ' + oa_band_mutations[0][1], ax=m_axs[1][0], sharex=m_axs[0][0])
+
+                    plot_path = (plot_target + band_ab[0].lower() + '_' + plot_measurements[idx_band_ab][0].lower() + '_' + os.path.splitext(
+                        in_a_measurements_file)[0]).lower() + '.png'
+                    print('Writing plot image: ' + plot_path)
+                    m_fig.autofmt_xdate()
+                    #plt.show()
+                    plt.savefig(plot_path)
 
             # Generate indices plots.
             if in_a_indices_df is not None and in_b_indices_df is not None:
@@ -332,12 +375,11 @@ def compare(path_to_config, config_file):
                         measurement_label = app_configuration['APP_SOURCE']['SUBPROJECTS'][subproject_name]['DATA']['SPECTRAL_INDICES'][spec_ind][measurement]
                         ax = temp_a_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement_label + ' ' + in_a_source_name, ax=i_axs[idx_spec_ind][0])
                         ax = temp_b_df.plot(kind=indices_plot_type, x=date_col, y=measurement, label=measurement_label + ' ' + in_b_source_name, ax=i_axs[idx_spec_ind][0])
-                #plt.show()
                 plot_path = (plot_target + os.path.splitext(
                     in_a_indices_file)[0]).lower() + '.png'
                 print('Writing plot image: ' + plot_path)
-                plt.style.use(plot_style)
                 i_fig.autofmt_xdate()
+                #plt.show()
                 plt.savefig(plot_path)
 
     if next_subproject_name is not None:
