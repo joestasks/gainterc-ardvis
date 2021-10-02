@@ -17,10 +17,10 @@ APP_SOURCE:
                 ENTRY: compare
                 NEXT_ENTRY_SUBPROJECT: ~
             DATA:
-                
+
                 # Data input base directory.
                 IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc
-                
+
                 # Data input A for comparison.
                 # Note: if using GA as a source, it should be input A.
                 # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
@@ -31,11 +31,11 @@ APP_SOURCE:
                 IN_A_SITE: ~ #NSW_2
                 IN_A_MEASUREMENTS_FILE: Measurements.csv
                 IN_A_INDICES_FILE: indices.csv
-                
+
                 # 0-1
                 IN_A_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
                 IN_A_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
-                
+
                 # Data input B for comparison.
                 IN_B_PREFIX: output
                 IN_B_SOURCE_NAME: ESA
@@ -48,7 +48,7 @@ APP_SOURCE:
                 # 0-1
                 IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
                 IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
-                
+
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
