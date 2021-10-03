@@ -108,6 +108,7 @@ def compare(path_to_config, config_file):
     print(products)
 
     for product in products:
+        ack['product'] = product
         ack['product_label'] = acd['GA_ALGORITHMS'][product]
         if ack.get('in_a_source_name').upper() == 'GA':
             ack['in_a_site_path'] = ack.get(
@@ -135,6 +136,7 @@ def compare(path_to_config, config_file):
         print('Processing these sites:-')
         print(sites)
         for site in sites:
+            ack['site'] = site
             print('Working on site: ' + site)
             this_in_a_site_path = ack.get('in_a_site_path') + site
             this_in_b_site_path = ack.get('in_b_site_path') + site
@@ -169,9 +171,9 @@ def compare(path_to_config, config_file):
             Path(os.path.dirname(ack.get('plot_target'))).mkdir(parents=True, exist_ok=True)
 
             band_mutations, oa_band_mutations, plot_measurements, oa_plot_measurements = _get_band_mutations(**ack)
-            oa_temp_a_df, oa_temp_b_df = _generate_oa_dfs(in_a_indices_df, in_b_indices_df, **ack)
+            oa_temp_a_df, oa_temp_b_df = _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df, oa_band_mutations, oa_plot_measurements, **ack)
             m_title, oa_title, i_title = _get_plot_titles(**ack)
-            _generate_measurements_plots(in_a_indices_df, in_b_indices_df, **ack)
+            _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df, band_mutations, plot_measurements, oa_temp_a_df, oa_temp_b_df, oa_band_mutations, oa_plot_measurements, **ack)
             _generate_indices_plots(in_a_indices_df, in_b_indices_df, **ack)
 
     if next_subproject_name is not None:
@@ -190,8 +192,6 @@ def _get_df_from_csv(file_path, **ack):
             sep=',',
             skipinitialspace=False,
             quotechar='|',
-            #parse_dates=[date_col],
-            #index_col=[date_col],
             converters={'valid_pixel_percentage': p2f})
         #print(new_df)
 
@@ -199,64 +199,113 @@ def _get_df_from_csv(file_path, **ack):
 
 
 def _get_band_mutations(**ack):
+    """Work out possible comparable band mutations."""
+
     band_mutations = []
     oa_band_mutations = []
     plot_measurements = []
     oa_plot_measurements = []
-            ga_oas_and_bands = ga_oas + ga_bands
-            ga_band_mappings = {**ga_oa_mappings, **ga_band_mappings}
-    #print(ga_oas_and_bands)
-    #print(ga_band_mappings)
-
+    ga_oas_and_bands = ack.get('ga_oas') + ack.get('ga_bands')
+    ga_band_mappings = {
+        **(ack.get('ga_oa_mappings')),
+        **(ack.get('ga_band_mappings'))}
     for band in ga_oas_and_bands:
         band_prefixes = [*ga_band_mappings[band]['PREFIXES']]
         band_plot_props = [*ga_band_mappings[band]['PLOT']]
-        a_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_a_source_name)
-        a_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (a_band_lookup_key))(in_a_source_name)
-        b_band_lookup_key = (lambda x: (x.upper() == 'ESA' and 'ESA_S2AB') or (None))(in_b_source_name)
-        b_band_lookup_key = (lambda x: (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key))(in_b_source_name)
-        if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
+        a_band_lookup_key = (lambda x:
+            (x.upper() == 'ESA' and 'ESA_S2AB') or (None)
+        )(ack.get('in_a_source_name'))
+        a_band_lookup_key = (lambda x:
+            (x.upper() == 'USGS' and 'USGS_LS8') or (a_band_lookup_key)
+        )(ack.get('in_a_source_name'))
+        b_band_lookup_key = (lambda x:
+            (x.upper() == 'ESA' and 'ESA_S2AB') or (None)
+        )(ack.get('in_b_source_name'))
+        b_band_lookup_key = (lambda x:
+            (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key)
+        )(ack.get('in_b_source_name'))
+        if (
+            ack.get('in_a_source_name').upper() == 'GA'
+        ) and (
+            band.lower().startswith(('satellite', 'solar'))
+        ):
             b_band_lookup_key = 'GA'
         for band_prefix in band_prefixes:
-            band_suffixes = [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES']]
+            band_suffixes = [
+                *ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES']]
             for band_suffix in band_suffixes:
-                if b_band_lookup_key in [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix]]:
-                    a_band_mut = band_prefix + product.lower() + '_' + band
-                    if a_band_lookup_key in [*ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix]]:
-                        a_band_mut = ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix][a_band_lookup_key]
-                    b_band_mut = ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][band_suffix][b_band_lookup_key]
-                    if in_a_source_name.upper() == 'GA' and product.upper() == 'LAM':
-                        a_band_mut = band_prefix + ga_band_lam_name + '_' + band
+                if b_band_lookup_key in [*ga_band_mappings[
+                        band]['PREFIXES'][
+                            band_prefix]['SUFFIXES'][
+                                band_suffix]]:
+                    a_band_mut = band_prefix + ack.get(
+                        'product'
+                    ).lower() + '_' + band
+                    if a_band_lookup_key in [*ga_band_mappings[
+                        band]['PREFIXES'][
+                            band_prefix]['SUFFIXES'][
+                                band_suffix]]:
+                        a_band_mut = ga_band_mappings[
+                            band]['PREFIXES'][
+                                band_prefix]['SUFFIXES'][
+                                    band_suffix][a_band_lookup_key]
+                    b_band_mut = ga_band_mappings[
+                        band]['PREFIXES'][
+                            band_prefix]['SUFFIXES'][
+                                band_suffix][b_band_lookup_key]
+                    if (
+                        ack.get('in_a_source_name').upper() == 'GA'
+                    ) and (
+                        ack.get('product').upper() == 'LAM'
+                    ):
+                        a_band_mut = band_prefix + ack.get(
+                            'ga_band_lam_name'
+                        ) + '_' + band
                     if band_suffix != 'Empty':
                         a_band_mut = a_band_mut + band_suffix
 
-                    if in_a_source_name.upper() == 'GA' and band.lower().startswith(('satellite', 'solar')):
-                        a_band_mut = band_prefix + ga_band_oa_name + '_' + band
+                    if (
+                        ack.get('in_a_source_name').upper() == 'GA'
+                    ) and (
+                        band.lower().startswith(('satellite', 'solar')
+                    )):
+                        a_band_mut = band_prefix + ack.get(
+                            'ga_band_oa_name'
+                        ) + '_' + band
                         if len(oa_band_mutations) > 0:
                             oa_band_mutations[0][1] = a_band_mut
                         else:
                             oa_band_mutations.append([a_band_mut, b_band_mut])
-                            oa_plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
+                            oa_plot_measurements.append([
+                                band_plot_props[0],
+                                ga_band_mappings[
+                                    band]['PLOT'][band_plot_props[0]]])
                     else:
                         band_mutations.append([a_band_mut, b_band_mut])
-                        plot_measurements.append([band_plot_props[0], ga_band_mappings[band]['PLOT'][band_plot_props[0]]])
-                #print(oa_band_mutations)
-                #print(len(oa_band_mutations))
-                #print(oa_plot_measurements)
-                #print(len(oa_plot_measurements))
-                #print(band_mutations)
-                #print(len(band_mutations))
-                #print(plot_measurements)
-                #print(len(plot_measurements))
+                        plot_measurements.append([
+                            band_plot_props[0],
+                            ga_band_mappings[
+                                band]['PLOT'][band_plot_props[0]]])
+    #print(oa_band_mutations)
+    #print(len(oa_band_mutations))
+    #print(oa_plot_measurements)
+    #print(len(oa_plot_measurements))
+    #print(band_mutations)
+    #print(len(band_mutations))
+    #print(plot_measurements)
+    #print(len(plot_measurements))
+
+    return (band_mutations, oa_band_mutations,
+            plot_measurements, oa_plot_measurements)
 
 
 def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
-    band_mutations, plot_measurements,
-    oa_temp_a_df, oa_temp_b_df,
     oa_band_mutations, oa_plot_measurements, **ack):
     """(OA) measurements and write the DataFrames used to name matched data files."""
 
-    if len(oa_band_mutations) > 0 and (oa_temp_a_df is None or oa_temp_b_df is None):
+    oa_temp_a_df = None
+    oa_temp_b_df = None
+    if len(oa_band_mutations) > 0:
 
         oa_temp_a_df, oa_temp_b_df = _prepare_ab_data(
             in_a_measurements_df, in_a_measurements_df,
@@ -316,7 +365,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             )
             ga_product_label = ''
             if ack.get('in_a_source_name').upper() == 'GA':
-                ga_product_label = ' ' + product_label
+                ga_product_label = ' ' + ack.get('product_label')
             temp_a_df.to_csv(
                 ack.get(
                     'plot_target'
@@ -380,7 +429,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     ] + ' ' + oa_band_mutations[0][
                         1
                     ][7:], ax=m_axs[1][0], sharex=m_axs[0][0])
-            plot_path = (ack.get('plot_target') + band_ab[0].lower() + '_' + plot_measurements[
+            plot_path = (ack.get(
+                'plot_target'
+            ) + band_ab[0].lower() + '_' + plot_measurements[
                 idx_band_ab
             ][0].lower() + '_' + os.path.splitext(
                 ack.get('in_a_measurements_file'))[0]).lower() + '.png'
@@ -501,19 +552,38 @@ def _apply_date_filtering(temp_a_df, temp_b_df):
     return (temp_a_df, temp_b_df)
 
 
-def _get_plot_titles():
-m_title=in_a_source_name + ' ' + in_a_satellite_name + \
-                            ' VS ' + \
-                            in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product_label + ' at ' + site,
+def _get_plot_titles(**ack):
+    """Make plot titles."""
 
-oa_title=in_a_source_name + ' ' + in_a_satellite_name + \
-                                ' VS ' + \
-                                in_a_source_name + ' ' + in_a_satellite_name + ' for ' + product_label + ' at ' + site,
+    m_title = ack.get(
+        'in_a_source_name'
+    ) + ' ' + ack.get(
+        'in_a_satellite_name'
+    ) + ' VS ' + ack.get(
+        'in_b_source_name'
+    ) + ' ' + ack.get(
+        'in_b_satellite_name'
+    ) + ' for ' + ack.get(
+        'product_label'
+    ) + ' at ' + ack.get(
+        'site'
+    )
+    oa_title = ack.get(
+        'in_a_source_name'
+    ) + ' ' + ack.get(
+        'in_a_satellite_name'
+    ) + ' VS ' + ack.get(
+        'in_a_source_name'
+    ) + ' ' + ack.get(
+        'in_a_satellite_name'
+    ) + ' for ' + ack.get(
+        'product_label'
+    ) + ' at ' + ack.get(
+        'site'
+    )
+    i_title = m_title
 
-                                i_title=in_a_source_name + ' ' + in_a_satellite_name + \
-                                ' VS ' + \
-                                in_b_source_name + ' ' + in_b_satellite_name + ' for ' + product + ' at ' + site,
-    return ()
+    return (m_title, oa_title, i_title)
 
 
 def call_next_entry(next_subproject_module, next_entry, path_to_config, config_file):
