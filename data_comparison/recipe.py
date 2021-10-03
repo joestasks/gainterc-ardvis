@@ -170,11 +170,33 @@ def compare(path_to_config, config_file):
             print('Making plot output directory: ' + ack.get('plot_target'))
             Path(os.path.dirname(ack.get('plot_target'))).mkdir(parents=True, exist_ok=True)
 
-            band_mutations, oa_band_mutations, plot_measurements, oa_plot_measurements = _get_band_mutations(**ack)
-            oa_temp_a_df, oa_temp_b_df = _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df, oa_band_mutations, oa_plot_measurements, **ack)
+            (
+                band_mutations, oa_band_mutations,
+                plot_measurements, oa_plot_measurements
+            ) = _get_band_mutations(**ack)
+            (
+                oa_temp_a_df, oa_temp_b_df
+            ) = _generate_oa_dfs(
+                in_a_measurements_df,
+                in_b_measurements_df,
+                oa_band_mutations,
+                oa_plot_measurements,
+                **ack)
             m_title, oa_title, i_title = _get_plot_titles(**ack)
-            _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df, band_mutations, plot_measurements, oa_temp_a_df, oa_temp_b_df, oa_band_mutations, oa_plot_measurements, **ack)
-            _generate_indices_plots(in_a_indices_df, in_b_indices_df, **ack)
+            _generate_measurements_plots(
+                in_a_measurements_df,
+                in_b_measurements_df,
+                band_mutations,
+                plot_measurements,
+                oa_temp_a_df,
+                oa_temp_b_df,
+                oa_band_mutations,
+                oa_plot_measurements,
+                m_title, oa_title, **ack)
+            _generate_indices_plots(
+                in_a_indices_df,
+                in_b_indices_df,
+                i_title, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)
@@ -341,7 +363,7 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
 def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     band_mutations, plot_measurements,
     oa_temp_a_df, oa_temp_b_df,
-    oa_band_mutations, oa_plot_measurements, **ack):
+    oa_band_mutations, oa_plot_measurements, m_title, oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
     app_config_data = ack.get('app_config_data')
@@ -360,7 +382,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             m_axs[0][0].set(
                 xlabel=ack.get('date_col'),
                 ylabel=ack.get('measurements_plot_y_label'),
-                title=ack.get('measurements_plot_title'),
+                title=m_title,
                 xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
             ga_product_label = ''
@@ -406,7 +428,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 m_axs[1][0].set(
                     xlabel=ack.get('date_col'),
                     ylabel=ack.get('oa_plot_y_label'),
-                    title=ack.get('oa_plot_title'),
+                    title=oa_title,
                     xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
                 )
                 ax = oa_temp_a_df.plot(
@@ -443,17 +465,15 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     return True
 
 
-def _generate_indices_plots(in_a_indices_df, in_b_indices_df, **ack):
+def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
     """Plot indices and write the DataFrames used to name matched data files."""
-
-    app_config_data = ack.get('app_config_data')
 
     if in_a_indices_df is not None and in_b_indices_df is not None:
         i_fig, i_axs = plt.subplots(
             len(ack.get('spectral_indices')), 1, figsize=(12, 4), squeeze=False)
         for idx_spec_ind, spec_ind in enumerate(ack.get('spectral_indices')):
-            spec_ind_measurements = [*app_config_data[
-                'SPECTRAL_INDICES'][spec_ind]]
+            spec_ind_measurements = [*(ack.get('acd')[
+                'SPECTRAL_INDICES'][spec_ind])]
             for measurement in spec_ind_measurements:
 
                 temp_a_df, temp_b_df = _prepare_ab_data(
@@ -466,10 +486,10 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, **ack):
                 i_axs[idx_spec_ind][0].set(
                     xlabel=ack.get('date_col'),
                     ylabel=spec_ind,
-                    title=ack.get('indices_plot_title'),
+                    title=i_title,
                     xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
                 )
-                measurement_label = app_config_data[
+                measurement_label = ack.get('acd')[
                     'SPECTRAL_INDICES'][spec_ind][measurement]
                 temp_a_df.to_csv(
                     ack.get(
