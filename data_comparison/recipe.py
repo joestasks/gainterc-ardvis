@@ -413,7 +413,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     idx_band_ab
                 ][1] + ' ' + ack.get(
                     'in_a_source_name'
-                ) + ga_product_label + ' ' + band_ab[2], ax=m_axs[0][0])
+                ) + ga_product_label + ' ' + band_ab[2],
+                #marker='o',
+                ax=m_axs[0][0])
             ax = temp_b_df.plot(
                 kind=ack.get(
                     'measurements_plot_type'
@@ -423,7 +425,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     idx_band_ab
                 ][1] + ' ' + ack.get(
                     'in_b_source_name'
-                ) + ' ' + band_ab[2], ax=m_axs[0][0])
+                ) + ' ' + band_ab[2],
+                #marker='o',
+                ax=m_axs[0][0])
             if oa_temp_a_df is not None and oa_temp_b_df is not None:
                 m_axs[1][0].set(
                     xlabel=ack.get('date_col'),
@@ -510,7 +514,9 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                         'date_col'
                     ), y=measurement, label=measurement_label + ' ' + ack.get(
                         'in_a_source_name'
-                    ), ax=i_axs[idx_spec_ind][0])
+                    ),
+                    c='r',
+                    ax=i_axs[idx_spec_ind][0])
                 ax = temp_b_df.plot(
                     kind=ack.get(
                         'indices_plot_type'
@@ -518,7 +524,10 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                         'date_col'
                     ), y=measurement, label=measurement_label + ' ' + ack.get(
                         'in_b_source_name'
-                    ), ax=i_axs[idx_spec_ind][0])
+                    ),
+                    c='b',
+                    ax=i_axs[idx_spec_ind][0])
+                plt.ylabel(spec_ind)  # weird fix for scatter
         plot_path = (ack.get('plot_target') + os.path.splitext(
             ack.get('in_a_indices_file'))[0]).lower() + '.png'
         print('Writing plot image: ' + plot_path)
