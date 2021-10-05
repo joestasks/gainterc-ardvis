@@ -297,13 +297,13 @@ def _get_band_mutations(**ack):
                         if len(oa_band_mutations) > 0:
                             oa_band_mutations[0][1] = a_band_mut
                         else:
-                            oa_band_mutations.append([a_band_mut, b_band_mut])
+                            oa_band_mutations.append([a_band_mut, b_band_mut, band])
                             oa_plot_measurements.append([
                                 band_plot_props[0],
                                 ga_band_mappings[
                                     band]['PLOT'][band_plot_props[0]]])
                     else:
-                        band_mutations.append([a_band_mut, b_band_mut])
+                        band_mutations.append([a_band_mut, b_band_mut, band])
                         plot_measurements.append([
                             band_plot_props[0],
                             ga_band_mappings[
@@ -413,7 +413,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     idx_band_ab
                 ][1] + ' ' + ack.get(
                     'in_a_source_name'
-                ) + ga_product_label, ax=m_axs[0][0])
+                ) + ga_product_label + ' ' + band_ab[2], ax=m_axs[0][0])
             ax = temp_b_df.plot(
                 kind=ack.get(
                     'measurements_plot_type'
@@ -423,7 +423,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     idx_band_ab
                 ][1] + ' ' + ack.get(
                     'in_b_source_name'
-                ), ax=m_axs[0][0])
+                ) + ' ' + band_ab[2], ax=m_axs[0][0])
             if oa_temp_a_df is not None and oa_temp_b_df is not None:
                 m_axs[1][0].set(
                     xlabel=ack.get('date_col'),
@@ -553,12 +553,16 @@ def _prepare_ab_data(in_a_df, in_b_df,
     temp_b_df = temp_b_df[temp_b_df[measurement].notna()]
     temp_a_df[measurement] = pd.to_numeric(temp_a_df[measurement])
     temp_b_df[measurement] = pd.to_numeric(temp_b_df[measurement])
+
+    if ack.get('date_filtering'):
+        temp_a_df, temp_b_df = _apply_date_filtering(temp_a_df, temp_b_df, **ack)
+
     temp_a_df[ack.get('date_col')] = pd.to_datetime(
         temp_a_df[ack.get('date_col')],
-        format=ack.get('standardised_date_format')) #.dt.date
+        format=ack.get('standardised_date_format'))
     temp_b_df[ack.get('date_col')] = pd.to_datetime(
         temp_b_df[ack.get('date_col')],
-        format=ack.get('standardised_date_format')) #.dt.date
+        format=ack.get('standardised_date_format'))
     #print(temp_a_df.dtypes)
     #print(temp_a_df)
     #print(temp_b_df.dtypes)
@@ -567,7 +571,40 @@ def _prepare_ab_data(in_a_df, in_b_df,
     return (temp_a_df, temp_b_df)
 
 
-def _apply_date_filtering(temp_a_df, temp_b_df):
+def _apply_date_filtering(temp_a_df, temp_b_df, **ack):
+    """Apply date filtering to match dates and ensure the same number of
+       aligned data points from each data set."""
+
+    temp_a_df[ack.get('date_col')] = pd.to_datetime(
+        temp_a_df[ack.get('date_col')],
+        format=ack.get('standardised_date_format')).dt.date
+    temp_b_df[ack.get('date_col')] = pd.to_datetime(
+        temp_b_df[ack.get('date_col')],
+        format=ack.get('standardised_date_format')).dt.date
+    res = pd.merge(
+        temp_a_df.assign(
+            grouper=pd.to_datetime(
+                temp_a_df[ack.get('date_col')]
+            ).dt.to_period('D')),
+        temp_b_df.assign(
+            grouper=pd.to_datetime(
+                temp_b_df[ack.get('date_col')]
+            ).dt.to_period('D')),
+        how='inner', on='grouper',
+        suffixes=('_' + ack.get('in_a_source_name'),
+                  '_' + ack.get('in_b_source_name')))
+    temp_a_df = res.loc[:, res.columns.str.endswith(
+        '_' + ack.get('in_a_source_name'))]
+    temp_a_df.columns = temp_a_df.columns.str.rstrip(
+        '_' + ack.get('in_a_source_name'))
+    temp_b_df = res.loc[:, res.columns.str.endswith(
+        '_' + ack.get('in_b_source_name'))]
+    temp_b_df.columns = temp_b_df.columns.str.rstrip(
+        '_' + ack.get('in_b_source_name'))
+    #res.to_csv(
+    #    ack.get(
+    #        'plot_target'
+    #    ).lower() + 'res_temp.csv', index=False, sep=',', quotechar='|')
 
     return (temp_a_df, temp_b_df)
 
