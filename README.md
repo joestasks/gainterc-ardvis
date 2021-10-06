@@ -18,4 +18,6 @@ conda update -n base -c defaults conda
 conda create -n gainterc
 conda activate gainterc
 conda install pandas
+conda install pyyaml
+conda install matplotlib
 ```
