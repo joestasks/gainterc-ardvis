@@ -366,6 +366,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     oa_band_mutations, oa_plot_measurements, m_title, oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
+    plt.close('all')
     app_config_data = ack.get('app_config_data')
 
     if in_a_measurements_df is not None and in_b_measurements_df is not None:
@@ -415,7 +416,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     'in_a_source_name'
                 ) + ga_product_label + ' ' + band_ab[2],
                 #marker='o',
-                ax=m_axs[0][0])
+                ax=m_axs[0][0],
+            #    sharex=m_axs[1][0]
+            )
             ax = temp_b_df.plot(
                 kind=ack.get(
                     'measurements_plot_type'
@@ -427,7 +430,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     'in_b_source_name'
                 ) + ' ' + band_ab[2],
                 #marker='o',
-                ax=m_axs[0][0])
+                ax=m_axs[0][0],
+            #    sharex=m_axs[1][0]
+            )
             if oa_temp_a_df is not None and oa_temp_b_df is not None:
                 m_axs[1][0].set(
                     xlabel=ack.get('date_col'),
@@ -444,7 +449,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                         1
                     ] + ' ' + oa_band_mutations[0][
                         0
-                    ][7:], ax=m_axs[1][0], sharex=m_axs[0][0])
+                    ][7:], ax=m_axs[1][0],
+                #    sharex=m_axs[0][0]
+                )
                 ax = oa_temp_b_df.plot(
                     kind=ack.get(
                         'measurements_plot_type'
@@ -454,7 +461,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                         1
                     ] + ' ' + oa_band_mutations[0][
                         1
-                    ][7:], ax=m_axs[1][0], sharex=m_axs[0][0])
+                    ][7:], ax=m_axs[1][0],
+                #    sharex=m_axs[0][0]
+                )
             plot_path = (ack.get(
                 'plot_target'
             ) + band_ab[0].lower() + '_' + plot_measurements[
@@ -465,12 +474,15 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             m_fig.autofmt_xdate()
             #plt.show()
             plt.savefig(plot_path)
+            plt.close(m_fig)
 
     return True
 
 
 def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
     """Plot indices and write the DataFrames used to name matched data files."""
+
+    plt.close('all')
 
     if in_a_indices_df is not None and in_b_indices_df is not None:
         i_fig, i_axs = plt.subplots(
@@ -534,6 +546,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
         i_fig.autofmt_xdate()
         #plt.show()
         plt.savefig(plot_path)
+        plt.close(i_fig)
 
     return True
 

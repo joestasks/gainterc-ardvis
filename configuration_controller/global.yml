@@ -49,6 +49,19 @@ APP_SOURCE:
                 IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
                 IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
+                # Data input C for comparison.
+                IN_C_PREFIX: output
+                IN_C_SOURCE_NAME: ESA
+                IN_C_SATELLITE_NAME: S2B
+                IN_C_PRODUCT: ~
+                IN_C_SITE: ~
+                IN_C_MEASUREMENTS_FILE: Measurements.csv
+                IN_C_INDICES_FILE: indices.csv
+
+                # 0-1
+                IN_C_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
@@ -56,8 +69,8 @@ APP_SOURCE:
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
                 PLOT_START_DATE: "2019-12-01"
                 PLOT_END_DATE: "2021-01-01"
-                #PLOT_STYLE: default
-                PLOT_STYLE: ggplot
+                PLOT_STYLE: default
+                #PLOT_STYLE: ggplot
                 #PLOT_STYLE: bmh
                 #PLOT_STYLE: seaborn-whitegrid
                 MEASUREMENTS_PLOT_TYPE: line
