@@ -38,8 +38,8 @@ APP_SOURCE:
 
                 # Data input B for comparison.
                 IN_B_PREFIX: output
-                IN_B_SOURCE_NAME: USGS
-                IN_B_SATELLITE_NAME: LS8
+                IN_B_SOURCE_NAME: GA
+                IN_B_SATELLITE_NAME: S2A
                 IN_B_PRODUCT: ~
                 IN_B_SITE: ~
                 IN_B_MEASUREMENTS_FILE: Measurements.csv
@@ -49,13 +49,26 @@ APP_SOURCE:
                 IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
                 IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
+                # Data input C for comparison.
+                IN_C_PREFIX: output
+                IN_C_SOURCE_NAME: GA
+                IN_C_SATELLITE_NAME: S2B
+                IN_C_PRODUCT: ~
+                IN_C_SITE: ~
+                IN_C_MEASUREMENTS_FILE: Measurements.csv
+                IN_C_INDICES_FILE: indices.csv
+
+                # 0-1
+                IN_C_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
-                DATE_FILTERING: True
+                DATE_FILTERING: False
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
-                PLOT_START_DATE: "2018-12-01"
-                PLOT_END_DATE: "2021-06-01"
+                PLOT_START_DATE: "2018-12-01" #"2019-12-01"
+                PLOT_END_DATE: "2022-01-01" #"2021-01-01"
                 #PLOT_STYLE: default
                 PLOT_STYLE: ggplot
                 #PLOT_STYLE: bmh
@@ -81,14 +94,14 @@ APP_SOURCE:
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
                 GA_OA_MAPPINGS:
-#                    satellite_azimuth:
-#                        PREFIXES:
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        GA: rg1_oa_satellite_azimuth
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    satellite_azimuth:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        GA: rg1_oa_satellite_azimuth
+                        PLOT:
+                            Mean_sr: Mean SR
                     solar_zenith:
                         PREFIXES:
                             rg1_:
@@ -98,18 +111,18 @@ APP_SOURCE:
                         PLOT:
                             Mean_sr: Mean SR
                 GA_BAND_MAPPINGS:
-                    coastal_aerosol:
-                        PREFIXES:
-                            rg1_:
-                                SUFFIXES:
-                                    Empty:
-                                        USGS_LS8: coastal_aerosol
-                            rg2_:
-                                SUFFIXES:
-                                    Empty:
-                                        ESA_S2AB: B01_60m
-                        PLOT:
-                            Mean_sr: Mean SR
+#                    coastal_aerosol:
+#                        PREFIXES:
+#                            rg1_:
+#                                SUFFIXES:
+#                                    Empty:
+#                                        USGS_LS8: coastal_aerosol
+#                            rg2_:
+#                                SUFFIXES:
+#                                    Empty:
+#                                        ESA_S2AB: B01_60m
+#                        PLOT:
+#                            Mean_sr: Mean SR
 #                    blue:
 #                        PREFIXES:
 #                            rg0_:

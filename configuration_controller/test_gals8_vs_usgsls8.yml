@@ -27,8 +27,8 @@ APP_SOURCE:
                 IN_A_PREFIX: output
                 IN_A_SOURCE_NAME: GA
                 IN_A_SATELLITE_NAME: LS8
-                IN_A_PRODUCT: NBAR
-                IN_A_SITE: NSW_17
+                IN_A_PRODUCT: ~
+                IN_A_SITE: ~
                 IN_A_MEASUREMENTS_FILE: Measurements.csv
                 IN_A_INDICES_FILE: indices.csv
 
@@ -81,14 +81,14 @@ APP_SOURCE:
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
                 GA_OA_MAPPINGS:
-#                    satellite_azimuth:
-#                        PREFIXES:
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        GA: rg1_oa_satellite_azimuth
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    satellite_azimuth:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        GA: rg1_oa_satellite_azimuth
+                        PLOT:
+                            Mean_sr: Mean SR
                     solar_zenith:
                         PREFIXES:
                             rg1_:
@@ -98,18 +98,18 @@ APP_SOURCE:
                         PLOT:
                             Mean_sr: Mean SR
                 GA_BAND_MAPPINGS:
-                    coastal_aerosol:
-                        PREFIXES:
-                            rg1_:
-                                SUFFIXES:
-                                    Empty:
-                                        USGS_LS8: coastal_aerosol
-                            rg2_:
-                                SUFFIXES:
-                                    Empty:
-                                        ESA_S2AB: B01_60m
-                        PLOT:
-                            Mean_sr: Mean SR
+#                    coastal_aerosol:
+#                        PREFIXES:
+#                            rg1_:
+#                                SUFFIXES:
+#                                    Empty:
+#                                        USGS_LS8: coastal_aerosol
+#                            rg2_:
+#                                SUFFIXES:
+#                                    Empty:
+#                                        ESA_S2AB: B01_60m
+#                        PLOT:
+#                            Mean_sr: Mean SR
 #                    blue:
 #                        PREFIXES:
 #                            rg0_:
