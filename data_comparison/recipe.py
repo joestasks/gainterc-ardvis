@@ -35,8 +35,10 @@ def compare(path_to_config, config_file):
         "acd": acd,
         "in_a_measurements_min_valid_pixel_percentage": acd['IN_A_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE'],
         "in_b_measurements_min_valid_pixel_percentage": acd['IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE'],
+        "in_c_measurements_min_valid_pixel_percentage": ('IN_C_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE' in [*acd] and acd['IN_C_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE']) or None,
         "in_a_indices_min_valid_pixel_percentage": acd['IN_A_INDICES_MIN_VALID_PIXEL_PERCENTAGE'],
         "in_b_indices_min_valid_pixel_percentage": acd['IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE'],
+        "in_c_indices_min_valid_pixel_percentage": ('IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE' in [*acd] and acd['IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE']) or None,
         "date_filtering": acd['DATE_FILTERING'],
         "standardised_date_format": acd['STANDARDISED_DATE_FORMAT'],
         "plot_start_date": np.datetime64(acd['PLOT_START_DATE']),
@@ -73,6 +75,14 @@ def compare(path_to_config, config_file):
         "in_b_site": acd['IN_B_SITE'],
         "in_b_measurements_file": acd['IN_B_MEASUREMENTS_FILE'],
         "in_b_indices_file": acd['IN_B_INDICES_FILE'],
+        "in_c_data_path": acd['IN_BASE'],
+        "in_c_prefix": ('IN_C_PREFIX' in [*acd] and acd['IN_C_PREFIX']) or '',
+        "in_c_source_name": ('IN_C_SOURCE_NAME' in [*acd] and acd['IN_C_SOURCE_NAME']) or '',
+        "in_c_satellite_name": ('IN_C_SATELLITE_NAME' in [*acd] and acd['IN_C_SATELLITE_NAME']) or '',
+        "in_c_product": ('IN_C_PRODUCT' in [*acd] and acd['IN_C_PRODUCT']) or '',
+        "in_c_site": ('IN_C_SITE' in [*acd] and acd['IN_C_SITE']) or '',
+        "in_c_measurements_file": ('IN_C_MEASUREMENTS_FILE' in [*acd] and acd['IN_C_MEASUREMENTS_FILE']) or '',
+        "in_c_indices_file": ('IN_C_INDICES_FILE' in [*acd] and acd['IN_C_INDICES_FILE']) or '',
         "out_path": acd['OUT_BASE'],
         "rec_max": app_configuration['APP_SOURCE']['DATA_RECORD_MAX_LIMIT'],
     }
@@ -95,13 +105,30 @@ def compare(path_to_config, config_file):
     ) + '_' + ack.get(
         'in_b_satellite_name'
     ) + (
-        lambda x: (x is not None and '_' + x) or ("")
+        lambda x: (x is not None and '_' + x) or ('')
     )(ack.get('in_b_product')) + '/'
+    if ack.get('in_c_source_name'):
+        ack['in_c_site_path'] = ack.get(
+            'in_c_data_path'
+        ) + '/' + ack.get(
+            'in_c_prefix'
+        ) + '_' + ack.get(
+            'in_c_source_name'
+        ) + '_' + ack.get(
+            'in_c_satellite_name'
+        ) + (
+            lambda x: (len(x) > 0 and '_' + x) or ('')
+        )(ack.get('in_c_product')) + '/'
+    else:
+        ack['in_c_site_path'] = ''
 
     plt.style.use(ack.get('plot_style'))
     products = None
     if ack.get('in_a_product') is None:
-        products = ack.get('ga_algorithms')
+        if ack.get('in_a_source_name') == 'GA':
+            products = ack.get('ga_algorithms')
+        else:
+            products = list(('',))
     else:
         products = list((ack.get('in_a_product'),))
     print('Using these products:-')
@@ -109,7 +136,10 @@ def compare(path_to_config, config_file):
 
     for product in products:
         ack['product'] = product
-        ack['product_label'] = acd['GA_ALGORITHMS'][product]
+        if product:
+            ack['product_label'] = ' for ' + acd['GA_ALGORITHMS'][product]
+        else:
+            ack['product_label'] = ''
         if ack.get('in_a_source_name').upper() == 'GA':
             ack['in_a_site_path'] = ack.get(
                 'in_a_data_path'
@@ -120,10 +150,32 @@ def compare(path_to_config, config_file):
             ) + '_' + ack.get(
                 'in_a_satellite_name'
             ) + '_' + product + '/'
+        if ack.get('in_b_source_name').upper() == 'GA':
+            ack['in_b_site_path'] = ack.get(
+                'in_b_data_path'
+            ) + '/' + ack.get(
+                'in_b_prefix'
+            ) + '_' + ack.get(
+                'in_b_source_name'
+            ) + '_' + ack.get(
+                'in_b_satellite_name'
+            ) + '_' + product + '/'
+        if ack.get('in_c_source_name').upper() == 'GA':
+            ack['in_c_site_path'] = ack.get(
+                'in_c_data_path'
+            ) + '/' + ack.get(
+                'in_c_prefix'
+            ) + '_' + ack.get(
+                'in_c_source_name'
+            ) + '_' + ack.get(
+                'in_c_satellite_name'
+            ) + '_' + product + '/'
         print('Input A sites path: ' + ack.get('in_a_site_path'))
         print('Input A configured site: ' + (ack.get('in_a_site') or '~'))
         print('Input B sites path: ' + ack.get('in_b_site_path'))
         print('Input B configured site: ' + (ack.get('in_b_site') or '~'))
+        print('Input C sites path: ' + ack.get('in_c_site_path'))
+        print('Input C configured site: ' + (ack.get('in_c_site') or '~'))
         site_paths = None
         if ack.get('in_a_site') is None:
             site_paths = list(Path(ack.get('in_a_site_path')).glob('**'))
@@ -140,14 +192,18 @@ def compare(path_to_config, config_file):
             print('Working on site: ' + site)
             this_in_a_site_path = ack.get('in_a_site_path') + site
             this_in_b_site_path = ack.get('in_b_site_path') + site
+            this_in_c_site_path = ack.get('in_c_site_path') + site
             in_a_measurements_path = Path(this_in_a_site_path + '/' + ack.get('in_a_measurements_file'))
             in_b_measurements_path = Path(this_in_b_site_path + '/' + ack.get('in_b_measurements_file'))
             in_a_indices_path = Path(this_in_a_site_path + '/' + ack.get('in_a_indices_file'))
             in_b_indices_path = Path(this_in_b_site_path + '/' + ack.get('in_b_indices_file'))
+            in_c_indices_path = Path(this_in_c_site_path + '/' + ack.get('in_c_indices_file'))
             print('Measurements input A: ' + str(in_a_measurements_path))
             print('Measurements input B: ' + str(in_b_measurements_path))
             print('Indices input A: ' + str(in_a_indices_path))
             print('Indices input B: ' + str(in_b_indices_path))
+            if ack.get('in_c_source_name'):
+                print('Indices input C: ' + str(in_c_indices_path))
             print('Making DataFrame from: ' + str(in_a_measurements_path))
             in_a_measurements_df = _get_df_from_csv(in_a_measurements_path, **ack)
             print('Making DataFrame from: ' + str(in_b_measurements_path))
@@ -156,17 +212,21 @@ def compare(path_to_config, config_file):
             in_a_indices_df = _get_df_from_csv(in_a_indices_path, **ack)
             print('Making DataFrame from: ' + str(in_b_indices_path))
             in_b_indices_df = _get_df_from_csv(in_b_indices_path, **ack)
+            in_c_indices_df = None
+            if ack.get('in_c_source_name'):
+                print('Making DataFrame from: ' + str(in_c_indices_path))
+                in_c_indices_df = _get_df_from_csv(in_c_indices_path, **ack)
             ack['plot_target'] = (ack.get(
                     'out_path'
                 ) + '/' + ack.get(
                     'in_a_source_name'
-                ) + '_' + ack.get(
+                ).lower() + '_' + ack.get(
                     'in_a_satellite_name'
-                ) + '_vs_' + ack.get(
+                ).lower() + '_vs_' + ack.get(
                     'in_b_source_name'
-                ) + '_' + ack.get(
+                ).lower() + '_' + ack.get(
                     'in_b_satellite_name'
-                ) + '/' + product + '/' + site + '/').lower()
+                ).lower() + '/' + product.lower() + '/' + site.lower() + '/')
             print('Making plot output directory: ' + ack.get('plot_target'))
             Path(os.path.dirname(ack.get('plot_target'))).mkdir(parents=True, exist_ok=True)
 
@@ -196,6 +256,7 @@ def compare(path_to_config, config_file):
             _generate_indices_plots(
                 in_a_indices_df,
                 in_b_indices_df,
+                in_c_indices_df,
                 i_title, **ack)
 
     if next_subproject_name is not None:
@@ -227,57 +288,51 @@ def _get_band_mutations(**ack):
     oa_band_mutations = []
     plot_measurements = []
     oa_plot_measurements = []
-    ga_oas_and_bands = ack.get('ga_oas') + ack.get('ga_bands')
-    ga_band_mappings = {
-        **(ack.get('ga_oa_mappings')),
-        **(ack.get('ga_band_mappings'))}
+    ga_oas_and_bands = ack.get('ga_bands')
+    ga_band_mappings = ack.get('ga_band_mappings')
+    if ack.get('in_a_source_name') == 'GA':
+        ga_oas_and_bands = ack.get('ga_oas') + ack.get('ga_bands')
+        ga_band_mappings = {
+            **(ack.get('ga_oa_mappings')),
+            **(ack.get('ga_band_mappings'))}
+
     for band in ga_oas_and_bands:
         band_prefixes = [*ga_band_mappings[band]['PREFIXES']]
         band_plot_props = [*ga_band_mappings[band]['PLOT']]
-        a_band_lookup_key = (lambda x:
-            (x.upper() == 'ESA' and 'ESA_S2AB') or (None)
-        )(ack.get('in_a_source_name'))
+
+        a_band_lookup_key = 'GA'
         a_band_lookup_key = (lambda x:
             (x.upper() == 'USGS' and 'USGS_LS8') or (a_band_lookup_key)
         )(ack.get('in_a_source_name'))
-        b_band_lookup_key = (lambda x:
-            (x.upper() == 'ESA' and 'ESA_S2AB') or (None)
-        )(ack.get('in_b_source_name'))
+        a_band_lookup_key = (lambda x:
+            (x.upper() == 'ESA' and 'ESA_S2AB') or (a_band_lookup_key)
+        )(ack.get('in_a_source_name'))
+
+        b_band_lookup_key = 'GA'
         b_band_lookup_key = (lambda x:
             (x.upper() == 'USGS' and 'USGS_LS8') or (b_band_lookup_key)
         )(ack.get('in_b_source_name'))
-        if (
-            ack.get('in_a_source_name').upper() == 'GA'
-        ) and (
+        b_band_lookup_key = (lambda x:
+            (x.upper() == 'ESA' and 'ESA_S2AB') or (b_band_lookup_key)
+        )(ack.get('in_b_source_name'))
+
+        if (a_band_lookup_key == 'GA') and (
             band.lower().startswith(('satellite', 'solar'))
         ):
             b_band_lookup_key = 'GA'
+
         for band_prefix in band_prefixes:
             band_suffixes = [
                 *ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES']]
             for band_suffix in band_suffixes:
-                if b_band_lookup_key in [*ga_band_mappings[
-                        band]['PREFIXES'][
-                            band_prefix]['SUFFIXES'][
-                                band_suffix]]:
+
+                # (A) Assume GA first.
+                a_band_mut = band
+                if a_band_lookup_key == 'GA':
                     a_band_mut = band_prefix + ack.get(
                         'product'
                     ).lower() + '_' + band
-                    if a_band_lookup_key in [*ga_band_mappings[
-                        band]['PREFIXES'][
-                            band_prefix]['SUFFIXES'][
-                                band_suffix]]:
-                        a_band_mut = ga_band_mappings[
-                            band]['PREFIXES'][
-                                band_prefix]['SUFFIXES'][
-                                    band_suffix][a_band_lookup_key]
-                    b_band_mut = ga_band_mappings[
-                        band]['PREFIXES'][
-                            band_prefix]['SUFFIXES'][
-                                band_suffix][b_band_lookup_key]
-                    if (
-                        ack.get('in_a_source_name').upper() == 'GA'
-                    ) and (
+                    if (a_band_lookup_key == 'GA') and (
                         ack.get('product').upper() == 'LAM'
                     ):
                         a_band_mut = band_prefix + ack.get(
@@ -286,9 +341,47 @@ def _get_band_mutations(**ack):
                     if band_suffix != 'Empty':
                         a_band_mut = a_band_mut + band_suffix
 
-                    if (
-                        ack.get('in_a_source_name').upper() == 'GA'
-                    ) and (
+                # (A) Check if there is a mapping to use and use if present.
+                if a_band_lookup_key in [*ga_band_mappings[
+                    band]['PREFIXES'][
+                        band_prefix]['SUFFIXES'][
+                            band_suffix]]:
+                    a_band_mut = ga_band_mappings[
+                        band]['PREFIXES'][
+                            band_prefix]['SUFFIXES'][
+                                band_suffix][a_band_lookup_key]
+
+                # (B) Assume GA first.
+                b_band_mut = band
+                if b_band_lookup_key == 'GA':
+                    b_band_mut = band_prefix + ack.get(
+                        'product'
+                    ).lower() + '_' + band
+                    if (b_band_lookup_key == 'GA') and (
+                        ack.get('product').upper() == 'LAM'
+                    ):
+                        b_band_mut = band_prefix + ack.get(
+                            'ga_band_lam_name'
+                        ) + '_' + band
+                    if band_suffix != 'Empty':
+                        b_band_mut = b_band_mut + band_suffix
+
+                # (B) Check if there is a mapping to use and use if present.
+                if b_band_lookup_key in [*ga_band_mappings[
+                    band]['PREFIXES'][
+                        band_prefix]['SUFFIXES'][
+                            band_suffix]]:
+                    b_band_mut = ga_band_mappings[
+                        band]['PREFIXES'][
+                            band_prefix]['SUFFIXES'][
+                                band_suffix][b_band_lookup_key]
+
+                # If false, not GA and b band lookup yielded no result;
+                # therefore, no mapping and no comparison possible.
+                if b_band_lookup_key == 'GA' or b_band_lookup_key in [
+                    *ga_band_mappings[band]['PREFIXES'][band_prefix]['SUFFIXES'][
+                        band_suffix]]:
+                    if (a_band_lookup_key == 'GA') and (
                         band.lower().startswith(('satellite', 'solar')
                     )):
                         a_band_mut = band_prefix + ack.get(
@@ -325,15 +418,17 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
     oa_band_mutations, oa_plot_measurements, **ack):
     """(OA) measurements and write the DataFrames used to name matched data files."""
 
+    # Note that B(b) is not used yet, as only GA supported for now.
     oa_temp_a_df = None
     oa_temp_b_df = None
-    if len(oa_band_mutations) > 0:
+    if in_a_measurements_df is not None and len(oa_band_mutations) > 0:
 
-        oa_temp_a_df, oa_temp_b_df = _prepare_ab_data(
-            in_a_measurements_df, in_a_measurements_df,
-            ack.get('band_col'), oa_band_mutations[0][0], oa_band_mutations[0][1],
+        oa_temp_a_df, oa_temp_b_df, oa_temp_c_df = _prepare_ab_data(
+            in_a_measurements_df, in_a_measurements_df, None,
+            ack.get('band_col'), oa_band_mutations[0][0], oa_band_mutations[0][1], None,
             ack.get('in_a_measurements_min_valid_pixel_percentage'),
-            ack.get('in_b_measurements_min_valid_pixel_percentage'),
+            ack.get('in_a_measurements_min_valid_pixel_percentage'),
+            None,
             oa_plot_measurements[0][0], **ack)
 
         oa_temp_a_df.to_csv(
@@ -346,16 +441,9 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
         ].lower() + '_' + ack.get(
             'in_a_source_name'
         ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-        oa_temp_b_df.to_csv(
-            ack.get(
-                'plot_target'
-        ) + oa_band_mutations[0][
-            1
-        ].lower() + '_' + oa_plot_measurements[0][
-            0
-        ].lower() + '_' + ack.get(
-            'in_b_source_name'
-        ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+
+        if oa_band_mutations[0][0] == oa_band_mutations[0][1]:
+            oa_temp_b_df = None
 
     return (oa_temp_a_df, oa_temp_b_df)
 
@@ -373,11 +461,12 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
         for idx_band_ab, band_ab in enumerate(band_mutations):
             m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
 
-            temp_a_df, temp_b_df = _prepare_ab_data(
-                in_a_measurements_df, in_b_measurements_df,
-                ack.get('band_col'), band_ab[0], band_ab[1],
+            temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
+                in_a_measurements_df, in_b_measurements_df, None,
+                ack.get('band_col'), band_ab[0], band_ab[1], None,
                 ack.get('in_a_measurements_min_valid_pixel_percentage'),
                 ack.get('in_b_measurements_min_valid_pixel_percentage'),
+                None,
                 plot_measurements[idx_band_ab][0], **ack)
 
             m_axs[0][0].set(
@@ -386,9 +475,11 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 title=m_title,
                 xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
+
+            # Save data files of plot data.
             ga_product_label = ''
             if ack.get('in_a_source_name').upper() == 'GA':
-                ga_product_label = ' ' + ack.get('product_label')
+                ga_product_label = ack.get('product_label')
             temp_a_df.to_csv(
                 ack.get(
                     'plot_target'
@@ -405,6 +496,8 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ][0].lower() + '_' + ack.get(
                     'in_b_source_name'
                 ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+
+            # Do plotting.
             ax = temp_a_df.plot(
                 kind=ack.get(
                     'measurements_plot_type'
@@ -433,13 +526,13 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ax=m_axs[0][0],
             #    sharex=m_axs[1][0]
             )
-            if oa_temp_a_df is not None and oa_temp_b_df is not None:
-                m_axs[1][0].set(
-                    xlabel=ack.get('date_col'),
-                    ylabel=ack.get('oa_plot_y_label'),
-                    title=oa_title,
-                    xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
-                )
+            m_axs[1][0].set(
+                xlabel=ack.get('date_col'),
+                ylabel=ack.get('oa_plot_y_label'),
+                title=oa_title,
+                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+            )
+            if oa_temp_a_df is not None:
                 ax = oa_temp_a_df.plot(
                     kind=ack.get(
                         'measurements_plot_type'
@@ -452,6 +545,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     ][7:], ax=m_axs[1][0],
                 #    sharex=m_axs[0][0]
                 )
+            if oa_temp_b_df is not None:
                 ax = oa_temp_b_df.plot(
                     kind=ack.get(
                         'measurements_plot_type'
@@ -464,6 +558,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     ][7:], ax=m_axs[1][0],
                 #    sharex=m_axs[0][0]
                 )
+
             plot_path = (ack.get(
                 'plot_target'
             ) + band_ab[0].lower() + '_' + plot_measurements[
@@ -479,7 +574,8 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     return True
 
 
-def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
+def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
+    i_title, **ack):
     """Plot indices and write the DataFrames used to name matched data files."""
 
     plt.close('all')
@@ -492,11 +588,12 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                 'SPECTRAL_INDICES'][spec_ind])]
             for measurement in spec_ind_measurements:
 
-                temp_a_df, temp_b_df = _prepare_ab_data(
-                    in_a_indices_df, in_b_indices_df,
-                    ack.get('indices_col'), spec_ind, spec_ind,
+                temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
+                    in_a_indices_df, in_b_indices_df, in_c_indices_df,
+                    ack.get('indices_col'), spec_ind, spec_ind, spec_ind,
                     ack.get('in_a_indices_min_valid_pixel_percentage'),
                     ack.get('in_b_indices_min_valid_pixel_percentage'),
+                    ack.get('in_c_indices_min_valid_pixel_percentage'),
                     measurement, **ack)
 
                 i_axs[idx_spec_ind][0].set(
@@ -505,6 +602,8 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                     title=i_title,
                     xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
                 )
+
+                # Save data files of plot data.
                 measurement_label = ack.get('acd')[
                     'SPECTRAL_INDICES'][spec_ind][measurement]
                 temp_a_df.to_csv(
@@ -512,13 +611,28 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                         'plot_target'
                     ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
                         'in_a_source_name'
+                    ).lower() + '_' + ack.get(
+                        'in_a_satellite_name'
                     ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                 temp_b_df.to_csv(
                     ack.get(
                         'plot_target'
                     ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
                         'in_b_source_name'
+                    ).lower() + '_' + ack.get(
+                        'in_b_satellite_name'
                     ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                if in_c_indices_df is not None and temp_c_df is not None:
+                    temp_c_df.to_csv(
+                        ack.get(
+                            'plot_target'
+                        ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
+                            'in_c_source_name'
+                        ).lower() + '_' + ack.get(
+                            'in_c_satellite_name'
+                        ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+
+                # Do plotting.
                 ax = temp_a_df.plot(
                     kind=ack.get(
                         'indices_plot_type'
@@ -526,6 +640,8 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                         'date_col'
                     ), y=measurement, label=measurement_label + ' ' + ack.get(
                         'in_a_source_name'
+                    ) + ' ' + ack.get(
+                        'in_a_satellite_name'
                     ),
                     c='r',
                     ax=i_axs[idx_spec_ind][0])
@@ -536,12 +652,34 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
                         'date_col'
                     ), y=measurement, label=measurement_label + ' ' + ack.get(
                         'in_b_source_name'
+                    ) + ' ' + ack.get(
+                        'in_b_satellite_name'
                     ),
                     c='b',
                     ax=i_axs[idx_spec_ind][0])
+                if in_c_indices_df is not None and temp_c_df is not None:
+                    ax = temp_c_df.plot(
+                        kind=ack.get(
+                            'indices_plot_type'
+                        ), x=ack.get(
+                            'date_col'
+                        ), y=measurement, label=measurement_label + ' ' + ack.get(
+                            'in_c_source_name'
+                        ) + ' ' + ack.get(
+                            'in_c_satellite_name'
+                        ),
+                        c='g',
+                        ax=i_axs[idx_spec_ind][0])
                 plt.ylabel(spec_ind)  # weird fix for scatter
+
         plot_path = (ack.get('plot_target') + os.path.splitext(
-            ack.get('in_a_indices_file'))[0]).lower() + '.png'
+            ack.get('in_a_indices_file'))[0]).lower() + (
+                (in_c_indices_df is not None and '_ab_' + ack.get(
+                    'in_c_source_name'
+                ).lower() + '_' + ack.get(
+                    'in_c_satellite_name'
+                ).lower()) or ''
+            ) + '.png'
         print('Writing plot image: ' + plot_path)
         i_fig.autofmt_xdate()
         #plt.show()
@@ -551,10 +689,10 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, i_title, **ack):
     return True
 
 
-def _prepare_ab_data(in_a_df, in_b_df,
-    extract_col, extract_a_val, extract_b_val,
+def _prepare_ab_data(in_a_df, in_b_df, in_c_df,
+    extract_col, extract_a_val, extract_b_val, extract_c_val,
     in_a_min_valid_pixel_percentage, in_b_min_valid_pixel_percentage,
-    measurement, **ack):
+    in_c_min_valid_pixel_percentage, measurement, **ack):
     """Cleanse, repair and filter (by date) data in preparation for plotting."""
 
     temp_a_df = in_a_df.loc[in_a_df[extract_col] == extract_a_val]
@@ -571,13 +709,25 @@ def _prepare_ab_data(in_a_df, in_b_df,
                 measurement]] = np.nan
     temp_b_df.loc[temp_b_df[measurement] == '--', [measurement]] = np.nan
     #print(temp_b_df)
+    temp_c_df = None
+    if in_c_df is not None:
+        temp_c_df = in_c_df.loc[in_c_df[extract_col] == extract_c_val]
+        temp_c_df.loc[
+            temp_c_df[
+                'valid_pixel_percentage'] < in_c_min_valid_pixel_percentage, [
+                    measurement]] = np.nan
+        temp_c_df.loc[temp_c_df[measurement] == '--', [measurement]] = np.nan
+        #print(temp_c_df)
+        temp_c_df = temp_c_df[temp_c_df[measurement].notna()]
+        temp_c_df[measurement] = pd.to_numeric(temp_c_df[measurement])
     temp_a_df = temp_a_df[temp_a_df[measurement].notna()]
     temp_b_df = temp_b_df[temp_b_df[measurement].notna()]
     temp_a_df[measurement] = pd.to_numeric(temp_a_df[measurement])
     temp_b_df[measurement] = pd.to_numeric(temp_b_df[measurement])
 
     if ack.get('date_filtering'):
-        temp_a_df, temp_b_df = _apply_date_filtering(temp_a_df, temp_b_df, **ack)
+        temp_a_df, temp_b_df, temp_c_df = _apply_date_filtering(
+            temp_a_df, temp_b_df, temp_c_df, **ack)
 
     temp_a_df[ack.get('date_col')] = pd.to_datetime(
         temp_a_df[ack.get('date_col')],
@@ -585,15 +735,21 @@ def _prepare_ab_data(in_a_df, in_b_df,
     temp_b_df[ack.get('date_col')] = pd.to_datetime(
         temp_b_df[ack.get('date_col')],
         format=ack.get('standardised_date_format'))
+    if temp_c_df is not None:
+        temp_c_df[ack.get('date_col')] = pd.to_datetime(
+            temp_c_df[ack.get('date_col')],
+            format=ack.get('standardised_date_format'))
     #print(temp_a_df.dtypes)
     #print(temp_a_df)
     #print(temp_b_df.dtypes)
     #print(temp_b_df)
+    #print(temp_c_df.dtypes)
+    #print(temp_c_df)
 
-    return (temp_a_df, temp_b_df)
+    return (temp_a_df, temp_b_df, temp_c_df)
 
 
-def _apply_date_filtering(temp_a_df, temp_b_df, **ack):
+def _apply_date_filtering(temp_a_df, temp_b_df, temp_c_df, **ack):
     """Apply date filtering to match dates and ensure the same number of
        aligned data points from each data set."""
 
@@ -613,22 +769,52 @@ def _apply_date_filtering(temp_a_df, temp_b_df, **ack):
                 temp_b_df[ack.get('date_col')]
             ).dt.to_period('D')),
         how='inner', on='grouper',
-        suffixes=('_' + ack.get('in_a_source_name'),
-                  '_' + ack.get('in_b_source_name')))
+        suffixes=('_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'),
+                  '_' + ack.get('in_b_source_name') + ack.get('in_b_satellite_name')))
     temp_a_df = res.loc[:, res.columns.str.endswith(
-        '_' + ack.get('in_a_source_name'))]
+        '_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'))]
     temp_a_df.columns = temp_a_df.columns.str.rstrip(
-        '_' + ack.get('in_a_source_name'))
+        '_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'))
     temp_b_df = res.loc[:, res.columns.str.endswith(
-        '_' + ack.get('in_b_source_name'))]
+        '_' + ack.get('in_b_source_name') + ack.get('in_b_satellite_name'))]
     temp_b_df.columns = temp_b_df.columns.str.rstrip(
-        '_' + ack.get('in_b_source_name'))
+        '_' + ack.get('in_b_source_name') + ack.get('in_b_satellite_name'))
+
+    if temp_c_df is not None:
+        temp_c_df[ack.get('date_col')] = pd.to_datetime(
+            temp_c_df[ack.get('date_col')],
+            format=ack.get('standardised_date_format')).dt.date
+        res2 = pd.merge(
+            temp_a_df.assign(
+                grouper=pd.to_datetime(
+                    temp_a_df[ack.get('date_col')]
+                ).dt.to_period('D')),
+            temp_c_df.assign(
+                grouper=pd.to_datetime(
+                    temp_c_df[ack.get('date_col')]
+                ).dt.to_period('D')),
+            how='inner', on='grouper',
+            suffixes=('_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'),
+                      '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name')))
+        temp_a_df = res2.loc[:, res2.columns.str.endswith(
+            '_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'))]
+        temp_a_df.columns = temp_a_df.columns.str.rstrip(
+            '_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'))
+        temp_c_df = res2.loc[:, res2.columns.str.endswith(
+            '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name'))]
+        temp_c_df.columns = temp_c_df.columns.str.rstrip(
+            '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name'))
+        #res2.to_csv(
+        #    ack.get(
+        #        'plot_target'
+        #    ) + 'res2_temp.csv', index=False, sep=',', quotechar='|')
+
     #res.to_csv(
     #    ack.get(
     #        'plot_target'
-    #    ).lower() + 'res_temp.csv', index=False, sep=',', quotechar='|')
+    #    ) + 'res_temp.csv', index=False, sep=',', quotechar='|')
 
-    return (temp_a_df, temp_b_df)
+    return (temp_a_df, temp_b_df, temp_c_df)
 
 
 def _get_plot_titles(**ack):
@@ -642,7 +828,7 @@ def _get_plot_titles(**ack):
         'in_b_source_name'
     ) + ' ' + ack.get(
         'in_b_satellite_name'
-    ) + ' for ' + ack.get(
+    ) + ack.get(
         'product_label'
     ) + ' at ' + ack.get(
         'site'
@@ -651,16 +837,34 @@ def _get_plot_titles(**ack):
         'in_a_source_name'
     ) + ' ' + ack.get(
         'in_a_satellite_name'
-    ) + ' VS ' + ack.get(
-        'in_a_source_name'
-    ) + ' ' + ack.get(
-        'in_a_satellite_name'
-    ) + ' for ' + ack.get(
+    ) + ack.get(
         'product_label'
     ) + ' at ' + ack.get(
         'site'
     )
     i_title = m_title
+    if len(ack.get(
+        'in_c_source_name'
+    )) > 0 and len(ack.get(
+        'in_c_satellite_name'
+    )) > 0:
+        i_title = ack.get(
+            'in_a_source_name'
+        ) + ' ' + ack.get(
+            'in_a_satellite_name'
+        ) + ' VS ' + ack.get(
+            'in_b_source_name'
+        ) + ' ' + ack.get(
+            'in_b_satellite_name'
+        ) + ' VS ' + ack.get(
+            'in_c_source_name'
+        ) + ' ' + ack.get(
+            'in_c_satellite_name'
+        ) + ack.get(
+            'product_label'
+        ) + ' at ' + ack.get(
+            'site'
+        )
 
     return (m_title, oa_title, i_title)
 
