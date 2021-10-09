@@ -39,7 +39,11 @@ def compare(path_to_config, config_file):
         "in_a_indices_min_valid_pixel_percentage": acd['IN_A_INDICES_MIN_VALID_PIXEL_PERCENTAGE'],
         "in_b_indices_min_valid_pixel_percentage": acd['IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE'],
         "in_c_indices_min_valid_pixel_percentage": ('IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE' in [*acd] and acd['IN_C_INDICES_MIN_VALID_PIXEL_PERCENTAGE']) or None,
-        "date_filtering": acd['DATE_FILTERING'],
+        "plot_sr_measurements": acd['PLOT_SR_MEASUREMENTS'],
+        "plot_indices": acd['PLOT_INDICES'],
+        "sr_measurements_date_filtering": acd['SR_MEASUREMENTS_DATE_FILTERING'],
+        "indices_same_sensor_date_filtering": acd['INDICES_SAME_SENSOR_DATE_FILTERING'],
+        "indices_ssdf_ga_algorithm_ref": acd['INDICES_SSDF_GA_ALGORITHM_REF'],
         "standardised_date_format": acd['STANDARDISED_DATE_FORMAT'],
         "plot_start_date": np.datetime64(acd['PLOT_START_DATE']),
         "plot_end_date": np.datetime64(acd['PLOT_END_DATE']),
@@ -67,6 +71,7 @@ def compare(path_to_config, config_file):
         "in_a_site": acd['IN_A_SITE'],
         "in_a_measurements_file": acd['IN_A_MEASUREMENTS_FILE'],
         "in_a_indices_file": acd['IN_A_INDICES_FILE'],
+        "in_a_same_sensor_date_filter_source": ('IN_A_SAME_SENSOR_DATE_FILTER_SOURCE' in [*acd] and acd['IN_A_SAME_SENSOR_DATE_FILTER_SOURCE']) or '',
         "in_b_data_path": acd['IN_BASE'],
         "in_b_prefix": acd['IN_B_PREFIX'],
         "in_b_source_name": acd['IN_B_SOURCE_NAME'],
@@ -75,6 +80,7 @@ def compare(path_to_config, config_file):
         "in_b_site": acd['IN_B_SITE'],
         "in_b_measurements_file": acd['IN_B_MEASUREMENTS_FILE'],
         "in_b_indices_file": acd['IN_B_INDICES_FILE'],
+        "in_b_same_sensor_date_filter_source": ('IN_B_SAME_SENSOR_DATE_FILTER_SOURCE' in [*acd] and acd['IN_B_SAME_SENSOR_DATE_FILTER_SOURCE']) or '',
         "in_c_data_path": acd['IN_BASE'],
         "in_c_prefix": ('IN_C_PREFIX' in [*acd] and acd['IN_C_PREFIX']) or '',
         "in_c_source_name": ('IN_C_SOURCE_NAME' in [*acd] and acd['IN_C_SOURCE_NAME']) or '',
@@ -83,6 +89,7 @@ def compare(path_to_config, config_file):
         "in_c_site": ('IN_C_SITE' in [*acd] and acd['IN_C_SITE']) or '',
         "in_c_measurements_file": ('IN_C_MEASUREMENTS_FILE' in [*acd] and acd['IN_C_MEASUREMENTS_FILE']) or '',
         "in_c_indices_file": ('IN_C_INDICES_FILE' in [*acd] and acd['IN_C_INDICES_FILE']) or '',
+        "in_c_same_sensor_date_filter_source": ('IN_C_SAME_SENSOR_DATE_FILTER_SOURCE' in [*acd] and acd['IN_C_SAME_SENSOR_DATE_FILTER_SOURCE']) or '',
         "out_path": acd['OUT_BASE'],
         "rec_max": app_configuration['APP_SOURCE']['DATA_RECORD_MAX_LIMIT'],
     }
@@ -226,38 +233,48 @@ def compare(path_to_config, config_file):
                     'in_b_source_name'
                 ).lower() + '_' + ack.get(
                     'in_b_satellite_name'
-                ).lower() + '/' + product.lower() + '/' + site.lower() + '/')
+                ).lower() + '/' + (
+                    ((ack.get(
+                        'in_a_source_name'
+                    ).upper() == 'GA' or ack.get(
+                        'in_b_source_name'
+                    ).upper() == 'GA' or ack.get(
+                        'in_c_source_name'
+                    ).upper() == 'GA') and product.lower()) or ''
+                ) + '/' + site.lower() + '/')
             print('Making plot output directory: ' + ack.get('plot_target'))
             Path(os.path.dirname(ack.get('plot_target'))).mkdir(parents=True, exist_ok=True)
-
-            (
-                band_mutations, oa_band_mutations,
-                plot_measurements, oa_plot_measurements
-            ) = _get_band_mutations(**ack)
-            (
-                oa_temp_a_df, oa_temp_b_df
-            ) = _generate_oa_dfs(
-                in_a_measurements_df,
-                in_b_measurements_df,
-                oa_band_mutations,
-                oa_plot_measurements,
-                **ack)
             m_title, oa_title, i_title = _get_plot_titles(**ack)
-            _generate_measurements_plots(
-                in_a_measurements_df,
-                in_b_measurements_df,
-                band_mutations,
-                plot_measurements,
-                oa_temp_a_df,
-                oa_temp_b_df,
-                oa_band_mutations,
-                oa_plot_measurements,
-                m_title, oa_title, **ack)
-            _generate_indices_plots(
-                in_a_indices_df,
-                in_b_indices_df,
-                in_c_indices_df,
-                i_title, **ack)
+
+            if ack.get('plot_sr_measurements'):
+                (
+                    band_mutations, oa_band_mutations,
+                    plot_measurements, oa_plot_measurements
+                ) = _get_band_mutations(**ack)
+                (
+                    oa_temp_a_df, oa_temp_b_df
+                ) = _generate_oa_dfs(
+                    in_a_measurements_df,
+                    in_b_measurements_df,
+                    oa_band_mutations,
+                    oa_plot_measurements,
+                    **ack)
+                _generate_measurements_plots(
+                    in_a_measurements_df,
+                    in_b_measurements_df,
+                    band_mutations,
+                    plot_measurements,
+                    oa_temp_a_df,
+                    oa_temp_b_df,
+                    oa_band_mutations,
+                    oa_plot_measurements,
+                    m_title, oa_title, **ack)
+            if ack.get('plot_indices'):
+                _generate_indices_plots(
+                    in_a_indices_df,
+                    in_b_indices_df,
+                    in_c_indices_df,
+                    i_title, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)
@@ -416,7 +433,8 @@ def _get_band_mutations(**ack):
 
 def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
     oa_band_mutations, oa_plot_measurements, **ack):
-    """(OA) measurements and write the DataFrames used to name matched data files."""
+    """Prepare other/additional attributes (OA) and write the DataFrames
+       used to name matched data files."""
 
     # Note that B(b) is not used yet, as only GA supported for now.
     oa_temp_a_df = None
@@ -425,23 +443,15 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
 
         oa_temp_a_df, oa_temp_b_df, oa_temp_c_df = _prepare_ab_data(
             in_a_measurements_df, in_a_measurements_df, None,
-            ack.get('band_col'), oa_band_mutations[0][0], oa_band_mutations[0][1], None,
+            ack.get('band_col'),
+            oa_band_mutations[0][0], oa_band_mutations[0][1], None,
             ack.get('in_a_measurements_min_valid_pixel_percentage'),
             ack.get('in_a_measurements_min_valid_pixel_percentage'),
             None,
-            oa_plot_measurements[0][0], **ack)
+            oa_plot_measurements[0][0],
+            ack.get('sr_measurements_date_filtering'), **ack)
 
-        oa_temp_a_df.to_csv(
-            ack.get(
-            'plot_target'
-        ) + oa_band_mutations[0][
-            0
-        ].lower() + '_' + oa_plot_measurements[0][
-            0
-        ].lower() + '_' + ack.get(
-            'in_a_source_name'
-        ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
-
+        # Remove duplicate data sets to prevent plotting.
         if oa_band_mutations[0][0] == oa_band_mutations[0][1]:
             oa_temp_b_df = None
 
@@ -463,18 +473,46 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
 
             temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
                 in_a_measurements_df, in_b_measurements_df, None,
-                ack.get('band_col'), band_ab[0], band_ab[1], None,
+                ack.get('band_col'),
+                band_ab[0], band_ab[1], None,
                 ack.get('in_a_measurements_min_valid_pixel_percentage'),
                 ack.get('in_b_measurements_min_valid_pixel_percentage'),
                 None,
-                plot_measurements[idx_band_ab][0], **ack)
+                plot_measurements[idx_band_ab][0],
+                ack.get('sr_measurements_date_filtering'), **ack)
 
-            m_axs[0][0].set(
-                xlabel=ack.get('date_col'),
-                ylabel=ack.get('measurements_plot_y_label'),
-                title=m_title,
-                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
-            )
+            if len(oa_band_mutations) > 0:
+                temp_a_df, oa_temp_a_df, oa_temp_b_df = _prepare_ab_data(
+                    temp_a_df, oa_temp_a_df, oa_temp_b_df,
+                    ack.get('band_col'),
+                    band_ab[0], oa_band_mutations[0][0], oa_band_mutations[0][1],
+                    ack.get('in_a_measurements_min_valid_pixel_percentage'),
+                    ack.get('in_a_measurements_min_valid_pixel_percentage'),
+                    ack.get('in_a_measurements_min_valid_pixel_percentage'),
+                    oa_plot_measurements[0][0],
+                    ack.get('sr_measurements_date_filtering'), **ack)
+            if oa_temp_a_df is not None:
+                oa_temp_a_df.to_csv(
+                    ack.get(
+                    'plot_target'
+                ) + oa_band_mutations[0][
+                    0
+                ].lower() + '_' + oa_plot_measurements[0][
+                    0
+                ].lower() + '_' + ack.get(
+                    'in_a_source_name'
+                ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+            if oa_temp_b_df is not None:
+                oa_temp_b_df.to_csv(
+                    ack.get(
+                    'plot_target'
+                ) + oa_band_mutations[0][
+                    1
+                ].lower() + '_' + oa_plot_measurements[0][
+                    0
+                ].lower() + '_' + ack.get(
+                    'in_a_source_name'
+                ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             # Save data files of plot data.
             ga_product_label = ''
@@ -498,6 +536,12 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             # Do plotting.
+            m_axs[0][0].set(
+                xlabel=ack.get('date_col'),
+                ylabel=ack.get('measurements_plot_y_label'),
+                title=m_title,
+                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+            )
             ax = temp_a_df.plot(
                 kind=ack.get(
                     'measurements_plot_type'
@@ -559,12 +603,12 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 #    sharex=m_axs[0][0]
                 )
 
-            plot_path = (ack.get(
+            plot_path = ack.get(
                 'plot_target'
             ) + band_ab[0].lower() + '_' + plot_measurements[
                 idx_band_ab
             ][0].lower() + '_' + os.path.splitext(
-                ack.get('in_a_measurements_file'))[0]).lower() + '.png'
+                ack.get('in_a_measurements_file'))[0].lower() + '.png'
             print('Writing plot image: ' + plot_path)
             m_fig.autofmt_xdate()
             #plt.show()
@@ -590,18 +634,18 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
 
                 temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
                     in_a_indices_df, in_b_indices_df, in_c_indices_df,
-                    ack.get('indices_col'), spec_ind, spec_ind, spec_ind,
+                    ack.get('indices_col'),
+                    spec_ind, spec_ind, spec_ind,
                     ack.get('in_a_indices_min_valid_pixel_percentage'),
                     ack.get('in_b_indices_min_valid_pixel_percentage'),
                     ack.get('in_c_indices_min_valid_pixel_percentage'),
-                    measurement, **ack)
-
-                i_axs[idx_spec_ind][0].set(
-                    xlabel=ack.get('date_col'),
-                    ylabel=spec_ind,
-                    title=i_title,
-                    xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
-                )
+                    measurement,
+                    False, **ack)
+                if ack.get('indices_same_sensor_date_filtering'):
+                    (
+                        temp_a_df, temp_b_df, temp_c_df
+                    ) = _apply_indices_same_sensor_date_filtering(
+                        temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement, **ack)
 
                 # Save data files of plot data.
                 measurement_label = ack.get('acd')[
@@ -633,6 +677,12 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
                 # Do plotting.
+                i_axs[idx_spec_ind][0].set(
+                    xlabel=ack.get('date_col'),
+                    ylabel=spec_ind,
+                    title=i_title,
+                    xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+                )
                 ax = temp_a_df.plot(
                     kind=ack.get(
                         'indices_plot_type'
@@ -672,8 +722,8 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         ax=i_axs[idx_spec_ind][0])
                 plt.ylabel(spec_ind)  # weird fix for scatter
 
-        plot_path = (ack.get('plot_target') + os.path.splitext(
-            ack.get('in_a_indices_file'))[0]).lower() + (
+        plot_path = ack.get('plot_target') + os.path.splitext(
+            ack.get('in_a_indices_file'))[0].lower() + (
                 (in_c_indices_df is not None and '_ab_' + ack.get(
                     'in_c_source_name'
                 ).lower() + '_' + ack.get(
@@ -692,7 +742,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
 def _prepare_ab_data(in_a_df, in_b_df, in_c_df,
     extract_col, extract_a_val, extract_b_val, extract_c_val,
     in_a_min_valid_pixel_percentage, in_b_min_valid_pixel_percentage,
-    in_c_min_valid_pixel_percentage, measurement, **ack):
+    in_c_min_valid_pixel_percentage, measurement, do_date_filtering, **ack):
     """Cleanse, repair and filter (by date) data in preparation for plotting."""
 
     temp_a_df = in_a_df.loc[in_a_df[extract_col] == extract_a_val]
@@ -725,7 +775,7 @@ def _prepare_ab_data(in_a_df, in_b_df, in_c_df,
     temp_a_df[measurement] = pd.to_numeric(temp_a_df[measurement])
     temp_b_df[measurement] = pd.to_numeric(temp_b_df[measurement])
 
-    if ack.get('date_filtering'):
+    if do_date_filtering:
         temp_a_df, temp_b_df, temp_c_df = _apply_date_filtering(
             temp_a_df, temp_b_df, temp_c_df, **ack)
 
@@ -804,17 +854,127 @@ def _apply_date_filtering(temp_a_df, temp_b_df, temp_c_df, **ack):
             '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name'))]
         temp_c_df.columns = temp_c_df.columns.str.rstrip(
             '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name'))
-        #res2.to_csv(
-        #    ack.get(
-        #        'plot_target'
-        #    ) + 'res2_temp.csv', index=False, sep=',', quotechar='|')
-
-    #res.to_csv(
-    #    ack.get(
-    #        'plot_target'
-    #    ) + 'res_temp.csv', index=False, sep=',', quotechar='|')
 
     return (temp_a_df, temp_b_df, temp_c_df)
+
+
+def _apply_indices_same_sensor_date_filtering(
+    temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement, **ack):
+
+    in_a_site_path = ack.get(
+        'in_a_data_path'
+    ) + '/' + ack.get(
+        'in_a_prefix'
+    ) + '_' + ack.get(
+        'in_a_same_sensor_date_filter_source'
+    ) + '_' + ack.get(
+        'in_a_satellite_name'
+    ) + '/'
+    in_b_site_path = ack.get(
+        'in_b_data_path'
+    ) + '/' + ack.get(
+        'in_b_prefix'
+    ) + '_' + ack.get(
+        'in_b_same_sensor_date_filter_source'
+    ) + '_' + ack.get(
+        'in_b_satellite_name'
+    ) + (
+        lambda x: (x is not None and '_' + x) or ('')
+    )(ack.get('in_b_product')) + '/'
+    in_c_site_path = ''
+    if ack.get('in_c_source_name'):
+        in_c_site_path = ack.get(
+            'in_c_data_path'
+        ) + '/' + ack.get(
+            'in_c_prefix'
+        ) + '_' + ack.get(
+            'in_c_same_sensor_date_filter_source'
+        ) + '_' + ack.get(
+            'in_c_satellite_name'
+        ) + (
+            lambda x: (len(x) > 0 and '_' + x) or ('')
+        )(ack.get('in_c_product')) + '/'
+    if ack.get('in_a_same_sensor_date_filter_source').upper() == 'GA':
+        in_a_site_path = ack.get(
+            'in_a_data_path'
+        ) + '/' + ack.get(
+            'in_a_prefix'
+        ) + '_' + ack.get(
+            'in_a_same_sensor_date_filter_source'
+        ) + '_' + ack.get(
+            'in_a_satellite_name'
+        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+    if ack.get('in_b_same_sensor_date_filter_source').upper() == 'GA':
+        in_b_site_path = ack.get(
+            'in_b_data_path'
+        ) + '/' + ack.get(
+            'in_b_prefix'
+        ) + '_' + ack.get(
+            'in_b_same_sensor_date_filter_source'
+        ) + '_' + ack.get(
+            'in_b_satellite_name'
+        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+    if ack.get('in_c_same_sensor_date_filter_source').upper() == 'GA':
+        in_c_site_path = ack.get(
+            'in_c_data_path'
+        ) + '/' + ack.get(
+            'in_c_prefix'
+        ) + '_' + ack.get(
+            'in_c_same_sensor_date_filter_source'
+        ) + '_' + ack.get(
+            'in_c_satellite_name'
+        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+    this_in_a_site_path = in_a_site_path + ack.get('site')
+    this_in_b_site_path = in_b_site_path + ack.get('site')
+    this_in_c_site_path = in_c_site_path + ack.get('site')
+    in_a_indices_path = Path(this_in_a_site_path + '/' + ack.get('in_a_indices_file'))
+    in_b_indices_path = Path(this_in_b_site_path + '/' + ack.get('in_b_indices_file'))
+    in_c_indices_path = Path(this_in_c_site_path + '/' + ack.get('in_c_indices_file'))
+    in_a_indices_df = _get_df_from_csv(in_a_indices_path, **ack)
+    in_b_indices_df = _get_df_from_csv(in_b_indices_path, **ack)
+    in_c_indices_df = None
+    if ack.get('in_c_source_name'):
+        in_c_indices_df = _get_df_from_csv(in_c_indices_path, **ack)
+    #print(in_a_indices_path)
+    #print(in_b_indices_path)
+    #print(in_c_indices_path)
+    #print(in_a_indices_df, in_b_indices_df, in_c_indices_df)
+
+    new_temp_a_df = temp_a_df
+    if in_a_indices_df is not None:
+        new_temp_a_df, junk_b_df, junk_c_df = _prepare_ab_data(
+            temp_a_df, in_a_indices_df, None,
+            ack.get('indices_col'),
+            spec_ind, spec_ind, None,
+            ack.get('in_a_indices_min_valid_pixel_percentage'),
+            ack.get('in_a_indices_min_valid_pixel_percentage'),
+            None,
+            measurement,
+            True, **ack)
+    new_temp_b_df = temp_b_df
+    if in_b_indices_df is not None:
+        new_temp_b_df, junk_b_df, junk_c_df = _prepare_ab_data(
+            temp_b_df, in_b_indices_df, None,
+            ack.get('indices_col'),
+            spec_ind, spec_ind, None,
+            ack.get('in_b_indices_min_valid_pixel_percentage'),
+            ack.get('in_b_indices_min_valid_pixel_percentage'),
+            None,
+            measurement,
+            True, **ack)
+    new_temp_c_df = temp_c_df
+    if in_c_indices_df is not None:
+        new_temp_c_df, junk_b_df, junk_c_df = _prepare_ab_data(
+            temp_c_df, in_c_indices_df, None,
+            ack.get('indices_col'),
+            spec_ind, spec_ind, None,
+            ack.get('in_c_indices_min_valid_pixel_percentage'),
+            ack.get('in_c_indices_min_valid_pixel_percentage'),
+            None,
+            measurement,
+            True, **ack)
+
+    return (new_temp_a_df, new_temp_b_df, new_temp_c_df)
 
 
 def _get_plot_titles(**ack):
