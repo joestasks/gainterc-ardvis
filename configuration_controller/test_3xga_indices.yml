@@ -27,10 +27,11 @@ APP_SOURCE:
                 IN_A_PREFIX: output
                 IN_A_SOURCE_NAME: GA
                 IN_A_SATELLITE_NAME: LS8
-                IN_A_PRODUCT: NBAR
+                IN_A_PRODUCT: ~
                 IN_A_SITE: NSW_17
                 IN_A_MEASUREMENTS_FILE: Measurements.csv
                 IN_A_INDICES_FILE: indices.csv
+                IN_A_SAME_SENSOR_DATE_FILTER_SOURCE: USGS
 
                 # 0-1
                 IN_A_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -44,6 +45,7 @@ APP_SOURCE:
                 IN_B_SITE: ~
                 IN_B_MEASUREMENTS_FILE: Measurements.csv
                 IN_B_INDICES_FILE: indices.csv
+                IN_B_SAME_SENSOR_DATE_FILTER_SOURCE: ESA
 
                 # 0-1
                 IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -57,6 +59,7 @@ APP_SOURCE:
                 IN_C_SITE: ~
                 IN_C_MEASUREMENTS_FILE: Measurements.csv
                 IN_C_INDICES_FILE: indices.csv
+                IN_C_SAME_SENSOR_DATE_FILTER_SOURCE: ESA
 
                 # 0-1
                 IN_C_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -65,10 +68,14 @@ APP_SOURCE:
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
-                DATE_FILTERING: False
+                PLOT_SR_MEASUREMENTS: False
+                PLOT_INDICES: True
+                SR_MEASUREMENTS_DATE_FILTERING: True
+                INDICES_SAME_SENSOR_DATE_FILTERING: True
+                INDICES_SSDF_GA_ALGORITHM_REF: NBAR
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
-                PLOT_START_DATE: "2018-12-01" #"2019-12-01"
-                PLOT_END_DATE: "2022-01-01" #"2021-01-01"
+                PLOT_START_DATE: "2018-12-01"
+                PLOT_END_DATE: "2022-01-01"
                 #PLOT_STYLE: default
                 PLOT_STYLE: ggplot
                 #PLOT_STYLE: bmh
