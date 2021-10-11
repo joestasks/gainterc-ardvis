@@ -21,35 +21,40 @@ APP_SOURCE:
                 # Data input base directory.
                 IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc
 
-                # Data input A for comparison.
-                # Note: if using GA as a source, it should be input A.
-                # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
-                IN_A_PREFIX: output
-                IN_A_SOURCE_NAME: GA
-                IN_A_SATELLITE_NAME: LS8
-                IN_A_PRODUCT: NBAR
-                IN_A_SITE: NSW_17
-                IN_A_MEASUREMENTS_FILE: Measurements.csv
-                IN_A_INDICES_FILE: indices.csv
-                IN_A_SAME_SENSOR_DATE_FILTER_SOURCE: USGS
+                COMPARISON_SOURCES:
+                    A:
 
-                # 0-1
-                IN_A_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
-                IN_A_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                        # Data input A for comparison.
+                        # Note: if using GA as a source, it should be input A.
+                        # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
+                        PREFIX: output
+                        SOURCE_NAME: GA
+                        SATELLITE_NAME: LS8
+                        PRODUCT: NBAR
+                        SITE: NSW_17
+                        MEASUREMENTS_FILE: Measurements.csv
+                        INDICES_FILE: indices.csv
+                        SAME_SENSOR_DATE_FILTER_SOURCE: USGS
 
-                # Data input B for comparison.
-                IN_B_PREFIX: output
-                IN_B_SOURCE_NAME: USGS
-                IN_B_SATELLITE_NAME: LS8
-                IN_B_PRODUCT: ~
-                IN_B_SITE: ~
-                IN_B_MEASUREMENTS_FILE: Measurements.csv
-                IN_B_INDICES_FILE: indices.csv
-                IN_B_SAME_SENSOR_DATE_FILTER_SOURCE: GA
+                        # 0-1
+                        MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                        INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
-                # 0-1
-                IN_B_MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
-                IN_B_INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                    B:
+
+                        # Data input B for comparison.
+                        PREFIX: output
+                        SOURCE_NAME: USGS
+                        SATELLITE_NAME: LS8
+                        PRODUCT: ~
+                        SITE: ~
+                        MEASUREMENTS_FILE: Measurements.csv
+                        INDICES_FILE: indices.csv
+                        SAME_SENSOR_DATE_FILTER_SOURCE: GA
+
+                        # 0-1
+                        MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
+                        INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
