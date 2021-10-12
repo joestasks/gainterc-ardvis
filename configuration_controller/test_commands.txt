@@ -1,5 +1,6 @@
 python ./configuration_controller/app_pipeline.py configuration_controller global.yml
 python ./configuration_controller/app_pipeline.py configuration_controller test_3xga_indices.yml
 python ./configuration_controller/app_pipeline.py configuration_controller test_gals8_vs_usgsls8.yml
+python ./configuration_controller/app_pipeline.py configuration_controller test_gas2a_vs_esas2a.yml
 python ./configuration_controller/app_pipeline.py configuration_controller test_gas2b_vs_esas2b.yml
 python ./configuration_controller/app_pipeline.py configuration_controller test_non_ga_indices.yml

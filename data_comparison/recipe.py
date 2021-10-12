@@ -31,6 +31,7 @@ def compare(path_to_config, config_file):
 
     ack = _make_app_config_kwargs(app_configuration, subproject_name)
     plt.style.use(ack.get('plot_style'))
+    saved_ratio_dfs = {"NBAR": {}, "LAM": {}}
     products = _get_products(**ack)
     for product in products:
         sites, ack = _get_sites(product, **ack)
@@ -81,7 +82,10 @@ def compare(path_to_config, config_file):
                     oa_band_mutations,
                     oa_plot_measurements,
                     **ack)
-                _generate_measurements_plots(
+                (
+                    plotted_a_df, plotted_b_df,
+                    plotted_oa_a_df, plotted_oa_b_df
+                ) = _generate_measurements_plots(
                     in_a_measurements_df,
                     in_b_measurements_df,
                     band_mutations,
@@ -91,12 +95,19 @@ def compare(path_to_config, config_file):
                     oa_band_mutations,
                     oa_plot_measurements,
                     m_title, oa_title, **ack)
+                if ack.get('product') == 'NBAR' or ack.get('product') == 'LAM':
+                    saved_ratio_dfs[product][site] = (
+                        plotted_a_df, plotted_b_df,
+                        plotted_oa_a_df, plotted_oa_b_df
+                    )
             if ack.get('plot_indices'):
                 _generate_indices_plots(
                     in_a_indices_df,
                     in_b_indices_df,
                     in_c_indices_df,
                     i_title, **ack)
+
+    _plot_nbar_lam_ratio(saved_ratio_dfs, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)
@@ -283,11 +294,15 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
 
 def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     band_mutations, plot_measurements,
-    oa_temp_a_df, oa_temp_b_df,
+    oa_in_a_df, oa_in_b_df,
     oa_band_mutations, oa_plot_measurements, m_title, oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
     plt.close('all')
+    temp_a_df = None
+    temp_b_df = None
+    oa_temp_a_df = None
+    oa_temp_b_df = None
 
     if in_a_measurements_df is not None and in_b_measurements_df is not None:
         for idx_band_ab, band_ab in enumerate(band_mutations):
@@ -305,7 +320,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
 
             if len(oa_band_mutations) > 0:
                 temp_a_df, oa_temp_a_df, oa_temp_b_df = _prepare_ab_data(
-                    temp_a_df, oa_temp_a_df, oa_temp_b_df,
+                    temp_a_df, oa_in_a_df, oa_in_b_df,
                     ack.get('band_col'),
                     band_ab[0], oa_band_mutations[0][0], oa_band_mutations[0][1],
                     ack.get('in_a_measurements_min_valid_pixel_percentage'),
@@ -437,7 +452,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             plt.savefig(plot_path)
             plt.close(m_fig)
 
-    return True
+    return (temp_a_df, temp_b_df, oa_temp_a_df, oa_temp_b_df)
 
 
 def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
@@ -447,12 +462,12 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
     plt.close('all')
 
     if in_a_indices_df is not None and in_b_indices_df is not None:
-        i_fig, i_axs = plt.subplots(
-            len(ack.get('spectral_indices')), 1, figsize=(12, 4), squeeze=False)
         for idx_spec_ind, spec_ind in enumerate(ack.get('spectral_indices')):
             spec_ind_measurements = [*(ack.get('acd')[
                 'SPECTRAL_INDICES'][spec_ind])]
             for measurement in spec_ind_measurements:
+                i_fig, i_axs = plt.subplots(
+                    1, 1, figsize=(12, 4), squeeze=False)
 
                 temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
                     in_a_indices_df, in_b_indices_df, in_c_indices_df,
@@ -499,7 +514,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
                 # Do plotting.
-                i_axs[idx_spec_ind][0].set(
+                i_axs[0][0].set(
                     xlabel=ack.get('date_col'),
                     ylabel=spec_ind,
                     title=i_title,
@@ -516,7 +531,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         'in_a_satellite_name'
                     ),
                     c='r',
-                    ax=i_axs[idx_spec_ind][0])
+                    ax=i_axs[0][0])
                 ax = temp_b_df.plot(
                     kind=ack.get(
                         'indices_plot_type'
@@ -528,7 +543,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         'in_b_satellite_name'
                     ),
                     c='b',
-                    ax=i_axs[idx_spec_ind][0])
+                    ax=i_axs[0][0])
                 if in_c_indices_df is not None and temp_c_df is not None:
                     ax = temp_c_df.plot(
                         kind=ack.get(
@@ -541,22 +556,24 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                             'in_c_satellite_name'
                         ),
                         c='g',
-                        ax=i_axs[idx_spec_ind][0])
+                        ax=i_axs[0][0])
                 plt.ylabel(spec_ind)  # weird fix for scatter
 
-        plot_path = ack.get('plot_target') + os.path.splitext(
-            ack.get('in_a_indices_file'))[0].lower() + (
-                (in_c_indices_df is not None and '_ab_' + ack.get(
-                    'in_c_source_name'
-                ).lower() + '_' + ack.get(
-                    'in_c_satellite_name'
-                ).lower()) or ''
-            ) + '.png'
-        print('Writing plot image: ' + plot_path)
-        i_fig.autofmt_xdate()
-        #plt.show()
-        plt.savefig(plot_path)
-        plt.close(i_fig)
+                plot_path = ack.get(
+                    'plot_target'
+                ) + spec_ind.lower() + '_' + measurement.lower() + '_' + os.path.splitext(
+                    ack.get('in_a_indices_file'))[0].lower() + (
+                        (in_c_indices_df is not None and '_ab_' + ack.get(
+                            'in_c_source_name'
+                        ).lower() + '_' + ack.get(
+                            'in_c_satellite_name'
+                        ).lower()) or ''
+                    ) + '.png'
+                print('Writing plot image: ' + plot_path)
+                i_fig.autofmt_xdate()
+                #plt.show()
+                plt.savefig(plot_path)
+                plt.close(i_fig)
 
     return True
 
@@ -1051,6 +1068,88 @@ def _set_plot_target(t_product, t_site, **ack):
         ) + '/' + t_site.lower() + '/')
 
     return ack
+
+
+def _plot_nbar_lam_ratio(ratio_dfs, **ack):
+
+    plt.close('all')
+    temp_a_df = None
+    temp_b_df = None
+    oa_temp_a_df = None
+    oa_temp_b_df = None
+    #print(ratio_dfs)
+
+    for site in [*ratio_dfs['NBAR']]:
+        temp_a_df = ratio_dfs['NBAR'][site][0]
+        oa_temp_a_df = ratio_dfs['NBAR'][site][2]
+        if site in [*ratio_dfs['LAM']]:
+            temp_b_df = ratio_dfs['LAM'][site][0]
+            oa_temp_b_df = ratio_dfs['LAM'][site][2]
+        m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
+
+        # Do plotting.
+        m_axs[0][0].set(
+            xlabel=ack.get('date_col'),
+            ylabel=ack.get('measurements_plot_y_label'),
+            title='Ratio',
+            xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+        )
+        if temp_a_df is not None:
+            ax = temp_a_df.plot(
+                kind=ack.get(
+                    'measurements_plot_type'
+                ), x=ack.get(
+                    'date_col'
+                ), y='Mean_sr', label='A',
+                #marker='o',
+                ax=m_axs[0][0],
+            #    sharex=m_axs[1][0]
+            )
+        if temp_b_df is not None:
+            ax = temp_b_df.plot(
+                kind=ack.get(
+                    'measurements_plot_type'
+                ), x=ack.get(
+                    'date_col'
+                ), y='Mean_sr', label='B',
+                #marker='o',
+                ax=m_axs[0][0],
+            #    sharex=m_axs[1][0]
+            )
+        m_axs[1][0].set(
+            xlabel=ack.get('date_col'),
+            ylabel=ack.get('oa_plot_y_label'),
+            title='OA',
+            xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+        )
+        if oa_temp_a_df is not None:
+            ax = oa_temp_a_df.plot(
+                kind=ack.get(
+                    'measurements_plot_type'
+                ), x=ack.get('date_col'), y='Mean_sr', label='A',
+                ax=m_axs[1][0],
+            #    sharex=m_axs[0][0]
+            )
+        if oa_temp_b_df is not None:
+            ax = oa_temp_b_df.plot(
+                kind=ack.get(
+                    'measurements_plot_type'
+                ), x=ack.get('date_col'), y='Mean_sr', label='B',
+                ax=m_axs[1][0],
+            #    sharex=m_axs[0][0]
+            )
+
+        ack = _set_plot_target('NBAR', site, **ack)
+        plot_path = ack.get(
+            'plot_target'
+        ) + 'nbar_lam_ratio.png'
+        print('Writing plot image: ' + plot_path)
+        m_fig.autofmt_xdate()
+        #plt.show()
+        plt.savefig(plot_path)
+        plt.close(m_fig)
+
+    return True
 
 
 def call_next_entry(next_subproject_module, next_entry, path_to_config, config_file):
