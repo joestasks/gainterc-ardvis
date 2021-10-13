@@ -31,7 +31,8 @@ def compare(path_to_config, config_file):
 
     ack = _make_app_config_kwargs(app_configuration, subproject_name)
     plt.style.use(ack.get('plot_style'))
-    saved_ratio_dfs = {"NBAR": {}, "LAM": {}}
+    nbar_ratio_dfs = {}
+    lam_ratio_dfs = {}
     products = _get_products(**ack)
     for product in products:
         sites, ack = _get_sites(product, **ack)
@@ -82,10 +83,7 @@ def compare(path_to_config, config_file):
                     oa_band_mutations,
                     oa_plot_measurements,
                     **ack)
-                (
-                    plotted_a_df, plotted_b_df,
-                    plotted_oa_a_df, plotted_oa_b_df
-                ) = _generate_measurements_plots(
+                ratio_dfs = _generate_measurements_plots(
                     in_a_measurements_df,
                     in_b_measurements_df,
                     band_mutations,
@@ -95,11 +93,12 @@ def compare(path_to_config, config_file):
                     oa_band_mutations,
                     oa_plot_measurements,
                     m_title, oa_title, **ack)
-                if ack.get('product') == 'NBAR' or ack.get('product') == 'LAM':
-                    saved_ratio_dfs[product][site] = (
-                        plotted_a_df, plotted_b_df,
-                        plotted_oa_a_df, plotted_oa_b_df
-                    )
+                if product.upper() == 'NBAR':
+                    nbar_ratio_dfs['NBAR_' + site] = ratio_dfs
+                elif product.upper() == 'LAM':
+                    lam_ratio_dfs['NBAR_' + site] = ratio_dfs
+                else:
+                    False  # discard
             if ack.get('plot_indices'):
                 _generate_indices_plots(
                     in_a_indices_df,
@@ -107,7 +106,7 @@ def compare(path_to_config, config_file):
                     in_c_indices_df,
                     i_title, **ack)
 
-    _plot_nbar_lam_ratio(saved_ratio_dfs, **ack)
+    _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)
@@ -303,6 +302,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     temp_b_df = None
     oa_temp_a_df = None
     oa_temp_b_df = None
+    ratio_dfs = {}
 
     if in_a_measurements_df is not None and in_b_measurements_df is not None:
         for idx_band_ab, band_ab in enumerate(band_mutations):
@@ -452,7 +452,15 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             plt.savefig(plot_path)
             plt.close(m_fig)
 
-    return (temp_a_df, temp_b_df, oa_temp_a_df, oa_temp_b_df)
+            ratio_dfs[band_ab[0]] = (
+                band_ab[2], temp_a_df, temp_b_df,
+                (len(oa_band_mutations) > 0 and oa_band_mutations[0][0]) or '',
+                oa_temp_a_df,
+                (len(oa_band_mutations) > 0 and oa_band_mutations[0][1]) or '',
+                oa_temp_b_df
+            )
+
+    return ratio_dfs
 
 
 def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
@@ -1070,84 +1078,96 @@ def _set_plot_target(t_product, t_site, **ack):
     return ack
 
 
-def _plot_nbar_lam_ratio(ratio_dfs, **ack):
+def _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack):
 
     plt.close('all')
     temp_a_df = None
     temp_b_df = None
     oa_temp_a_df = None
     oa_temp_b_df = None
-    #print(ratio_dfs)
 
-    for site in [*ratio_dfs['NBAR']]:
-        temp_a_df = ratio_dfs['NBAR'][site][0]
-        oa_temp_a_df = ratio_dfs['NBAR'][site][2]
-        if site in [*ratio_dfs['LAM']]:
-            temp_b_df = ratio_dfs['LAM'][site][0]
-            oa_temp_b_df = ratio_dfs['LAM'][site][2]
-        m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
+    for site in [*nbar_ratio_dfs]:
+        for ga_band in [*nbar_ratio_dfs[site]]:
+            temp_a_df = nbar_ratio_dfs[site][ga_band][1]
+            oa_temp_a_df = nbar_ratio_dfs[site][ga_band][4]
+            if site in [*lam_ratio_dfs]:
+                lam_ga_band = ga_band.replace('nbar', 'lambertian')
+                temp_b_df = lam_ratio_dfs[site][lam_ga_band][1]
+                oa_temp_b_df = lam_ratio_dfs[site][lam_ga_band][6]
+            res = pd.merge(
+                temp_a_df.assign(
+                    grouper=pd.to_datetime(
+                        temp_a_df[ack.get('date_col')]
+                    ).dt.to_period('D')),
+                temp_b_df.assign(
+                    grouper=pd.to_datetime(
+                        temp_b_df[ack.get('date_col')]
+                    ).dt.to_period('D')),
+                how='inner', on='grouper',
+                suffixes=('_nbar', '_lam'))
+            res['ratio'] = res['Mean_sr_nbar'] / res['Mean_sr_lam']
+            m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
 
-        # Do plotting.
-        m_axs[0][0].set(
-            xlabel=ack.get('date_col'),
-            ylabel=ack.get('measurements_plot_y_label'),
-            title='Ratio',
-            xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
-        )
-        if temp_a_df is not None:
-            ax = temp_a_df.plot(
-                kind=ack.get(
-                    'measurements_plot_type'
-                ), x=ack.get(
-                    'date_col'
-                ), y='Mean_sr', label='A',
-                #marker='o',
-                ax=m_axs[0][0],
-            #    sharex=m_axs[1][0]
+            # Do plotting.
+            m_axs[0][0].set(
+                xlabel=ack.get('date_col'),
+                ylabel='NBAR/LAM',
+                title='NBAR / LAM Ratio for ' + ga_band.split('_nbar_')[1] + ' at ' + site.replace('NBAR_', ''),
+                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
-        if temp_b_df is not None:
-            ax = temp_b_df.plot(
-                kind=ack.get(
-                    'measurements_plot_type'
-                ), x=ack.get(
-                    'date_col'
-                ), y='Mean_sr', label='B',
-                #marker='o',
-                ax=m_axs[0][0],
-            #    sharex=m_axs[1][0]
+            if temp_a_df is not None:
+                ax = res.plot(
+                    kind=ack.get(
+                        'measurements_plot_type'
+                    ), x='Date_nbar',
+                    y='ratio', label=ga_band.split('_nbar_')[1],
+                    #marker='o',
+                    ax=m_axs[0][0],
+                #    sharex=m_axs[1][0]
+                )
+            #if temp_b_df is not None:
+            #    ax = temp_b_df.plot(
+            #        kind=ack.get(
+            #            'measurements_plot_type'
+            #        ), x=ack.get(
+            #            'date_col'
+            #        ), y='Mean_sr', label='B',
+            #        #marker='o',
+            #        ax=m_axs[0][0],
+            #    #    sharex=m_axs[1][0]
+            #    )
+            m_axs[1][0].set(
+                xlabel=ack.get('date_col'),
+                ylabel=ack.get('oa_plot_y_label'),
+                title='Additional Attributes',
+                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
-        m_axs[1][0].set(
-            xlabel=ack.get('date_col'),
-            ylabel=ack.get('oa_plot_y_label'),
-            title='OA',
-            xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
-        )
-        if oa_temp_a_df is not None:
-            ax = oa_temp_a_df.plot(
-                kind=ack.get(
-                    'measurements_plot_type'
-                ), x=ack.get('date_col'), y='Mean_sr', label='A',
-                ax=m_axs[1][0],
-            #    sharex=m_axs[0][0]
-            )
-        if oa_temp_b_df is not None:
-            ax = oa_temp_b_df.plot(
-                kind=ack.get(
-                    'measurements_plot_type'
-                ), x=ack.get('date_col'), y='Mean_sr', label='B',
-                ax=m_axs[1][0],
-            #    sharex=m_axs[0][0]
-            )
+            if oa_temp_a_df is not None:
+                ax = oa_temp_a_df.plot(
+                    kind=ack.get(
+                        'measurements_plot_type'
+                    ), x=ack.get('date_col'), y='Mean_sr', label=nbar_ratio_dfs[site][ga_band][3][7:],
+                    ax=m_axs[1][0],
+                #    sharex=m_axs[0][0]
+                )
+            if oa_temp_b_df is not None:
+                ax = oa_temp_b_df.plot(
+                    kind=ack.get(
+                        'measurements_plot_type'
+                    ), x=ack.get('date_col'), y='Mean_sr', label=nbar_ratio_dfs[site][ga_band][5][7:],
+                    ax=m_axs[1][0],
+                #    sharex=m_axs[0][0]
+                )
 
-        ack = _set_plot_target('NBAR', site, **ack)
-        plot_path = ack.get(
-            'plot_target'
-        ) + 'nbar_lam_ratio.png'
-        print('Writing plot image: ' + plot_path)
-        m_fig.autofmt_xdate()
-        #plt.show()
-        plt.savefig(plot_path)
-        plt.close(m_fig)
+            ack = _set_plot_target('NBAR', site.replace('NBAR_', ''), **ack)
+            plot_path = ack.get(
+                'plot_target'
+            ) + ga_band + '_nbar_lam_ratio.png'
+            print('Writing plot image: ' + plot_path)
+            m_fig.autofmt_xdate()
+            #plt.show()
+            plt.savefig(plot_path)
+            plt.close(m_fig)
 
     return True
 
