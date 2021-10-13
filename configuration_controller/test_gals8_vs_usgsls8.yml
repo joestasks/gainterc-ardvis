@@ -19,7 +19,7 @@ APP_SOURCE:
             DATA:
 
                 # Data input base directory.
-                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc
+                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref
 
                 COMPARISON_SOURCES:
                     A:
@@ -30,10 +30,11 @@ APP_SOURCE:
                         PREFIX: output
                         SOURCE_NAME: GA
                         SATELLITE_NAME: LS8
-                        PRODUCT: NBAR
+                        PRODUCT: ~
                         SITE: NSW_17
                         MEASUREMENTS_FILE: Measurements.csv
                         INDICES_FILE: indices.csv
+                        SAME_SENSOR_DATE_FILTER_SOURCE: USGS
 
                         # 0-1
                         MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -49,6 +50,7 @@ APP_SOURCE:
                         SITE: ~
                         MEASUREMENTS_FILE: Measurements.csv
                         INDICES_FILE: indices.csv
+                        SAME_SENSOR_DATE_FILTER_SOURCE: GA
 
                         # 0-1
                         MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -58,7 +60,7 @@ APP_SOURCE:
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
                 PLOT_SR_MEASUREMENTS: True
-                PLOT_INDICES: False
+                PLOT_INDICES: True
                 SR_MEASUREMENTS_DATE_FILTERING: True
                 INDICES_SAME_SENSOR_DATE_FILTERING: True
                 INDICES_SSDF_GA_ALGORITHM_REF: NBAR
@@ -86,6 +88,16 @@ APP_SOURCE:
                 SPECTRAL_INDICES:
                     NDVI:
                         NDVI_value: NDVI value
+                    Mndwi:
+                        NDVI_value: Mndwi value
+                    Nbr:
+                        NDVI_value: NBR value
+                    Ndii:
+                        NDVI_value: Ndii value
+                    Nmdi:
+                        NDVI_value: Nmdi value
+                    Msi:
+                        NDVI_value: Msi value
                 DATE_COL: Date
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
@@ -107,60 +119,60 @@ APP_SOURCE:
                         PLOT:
                             Mean_sr: Mean SR
                 GA_BAND_MAPPINGS:
-#                    coastal_aerosol:
-#                        PREFIXES:
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: coastal_aerosol
-#                            rg2_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B01_60m
-#                        PLOT:
-#                            Mean_sr: Mean SR
-#                    blue:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B02_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: blue
-#                        PLOT:
-#                            Mean_sr: Mean SR
-#                    green:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B03_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: green
-#                        PLOT:
-#                            Mean_sr: Mean SR
-#                    red:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B04_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: red
-#                                    _edge_1:
-#                                        ESA_S2AB: B05_20m
-#                                    _edge_2:
-#                                        ESA_S2AB: B06_20m
-#                                    _edge_3:
-#                                        ESA_S2AB: B07_20m
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    coastal_aerosol:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: coastal_aerosol
+                            rg2_:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: B01_60m
+                        PLOT:
+                            Mean_sr: Mean SR
+                    blue:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                   Empty:
+                                        ESA_S2AB: B02_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: blue
+                        PLOT:
+                            Mean_sr: Mean SR
+                    green:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: B03_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: green
+                        PLOT:
+                            Mean_sr: Mean SR
+                    red:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: B04_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: red
+                                    _edge_1:
+                                        ESA_S2AB: B05_20m
+                                    _edge_2:
+                                        ESA_S2AB: B06_20m
+                                    _edge_3:
+                                        ESA_S2AB: B07_20m
+                        PLOT:
+                            Mean_sr: Mean SR
                     nir:
                         PREFIXES:
                             rg0_:
@@ -175,18 +187,18 @@ APP_SOURCE:
                                         ESA_S2AB: B8A_20m
                         PLOT:
                             Mean_sr: Mean SR
-#                    swir:
-#                        PREFIXES:
-#                            rg1_:
-#                                SUFFIXES:
-#                                    _1:
-#                                        USGS_LS8: swir_1
-#                                    _2:
-#                                        ESA_S2AB: B11_20m
-#                                        USGS_LS8: swir_2
-#                                    _3:
-#                                        ESA_S2AB: B12_20m
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    swir:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    _1:
+                                        USGS_LS8: swir_1
+                                    _2:
+                                        ESA_S2AB: B11_20m
+                                        USGS_LS8: swir_2
+                                    _3:
+                                        ESA_S2AB: B12_20m
+                        PLOT:
+                            Mean_sr: Mean SR
     MAIN: data_comparison
     DATA_RECORD_MAX_LIMIT: ~

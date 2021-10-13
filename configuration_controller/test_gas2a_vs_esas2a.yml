@@ -29,12 +29,12 @@ APP_SOURCE:
                         # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
                         PREFIX: output
                         SOURCE_NAME: GA
-                        SATELLITE_NAME: LS8
+                        SATELLITE_NAME: S2A
                         PRODUCT: ~
                         SITE: NSW_17
                         MEASUREMENTS_FILE: Measurements.csv
                         INDICES_FILE: indices.csv
-                        SAME_SENSOR_DATE_FILTER_SOURCE: USGS
+                        SAME_SENSOR_DATE_FILTER_SOURCE: ESA
 
                         # 0-1
                         MEASUREMENTS_MIN_VALID_PIXEL_PERCENTAGE: 1.0
@@ -44,8 +44,8 @@ APP_SOURCE:
 
                         # Data input B for comparison.
                         PREFIX: output
-                        SOURCE_NAME: USGS
-                        SATELLITE_NAME: LS8
+                        SOURCE_NAME: ESA
+                        SATELLITE_NAME: S2A
                         PRODUCT: ~
                         SITE: ~
                         MEASUREMENTS_FILE: Measurements.csv
@@ -88,18 +88,28 @@ APP_SOURCE:
                 SPECTRAL_INDICES:
                     NDVI:
                         NDVI_value: NDVI value
+                    Mndwi:
+                        NDVI_value: Mndwi value
+                    Nbr:
+                        NDVI_value: NBR value
+                    Ndii:
+                        NDVI_value: Ndii value
+                    Nmdi:
+                        NDVI_value: Nmdi value
+                    Msi:
+                        NDVI_value: Msi value
                 DATE_COL: Date
                 BAND_COL: Band
                 INDICES_COL: Spectral_indices
                 GA_OA_MAPPINGS:
-                    satellite_azimuth:
-                        PREFIXES:
-                            rg1_:
-                                SUFFIXES:
-                                    Empty:
-                                        GA: rg1_oa_satellite_azimuth
-                        PLOT:
-                            Mean_sr: Mean SR
+#                    satellite_azimuth:
+#                        PREFIXES:
+#                            rg1_:
+#                                SUFFIXES:
+#                                    Empty:
+#                                        GA: rg1_oa_satellite_azimuth
+#                        PLOT:
+#                            Mean_sr: Mean SR
                     solar_zenith:
                         PREFIXES:
                             rg1_:
@@ -121,48 +131,48 @@ APP_SOURCE:
                                         ESA_S2AB: B01_60m
                         PLOT:
                             Mean_sr: Mean SR
-#                    blue:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B02_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: blue
-#                        PLOT:
-#                            Mean_sr: Mean SR
-#                    green:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B03_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: green
-#                        PLOT:
-#                            Mean_sr: Mean SR
-#                    red:
-#                        PREFIXES:
-#                            rg0_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        ESA_S2AB: B04_10m
-#                            rg1_:
-#                                SUFFIXES:
-#                                    Empty:
-#                                        USGS_LS8: red
-#                                    _edge_1:
-#                                        ESA_S2AB: B05_20m
-#                                    _edge_2:
-#                                        ESA_S2AB: B06_20m
-#                                    _edge_3:
-#                                        ESA_S2AB: B07_20m
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    blue:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                   Empty:
+                                        ESA_S2AB: B02_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: blue
+                        PLOT:
+                            Mean_sr: Mean SR
+                    green:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: B03_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: green
+                        PLOT:
+                            Mean_sr: Mean SR
+                    red:
+                        PREFIXES:
+                            rg0_:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: B04_10m
+                            rg1_:
+                                SUFFIXES:
+                                    Empty:
+                                        USGS_LS8: red
+                                    _edge_1:
+                                        ESA_S2AB: B05_20m
+                                    _edge_2:
+                                        ESA_S2AB: B06_20m
+                                    _edge_3:
+                                        ESA_S2AB: B07_20m
+                        PLOT:
+                            Mean_sr: Mean SR
                     nir:
                         PREFIXES:
                             rg0_:
@@ -177,18 +187,18 @@ APP_SOURCE:
                                         ESA_S2AB: B8A_20m
                         PLOT:
                             Mean_sr: Mean SR
-#                    swir:
-#                        PREFIXES:
-#                            rg1_:
-#                                SUFFIXES:
-#                                    _1:
-#                                        USGS_LS8: swir_1
-#                                    _2:
-#                                        ESA_S2AB: B11_20m
-#                                        USGS_LS8: swir_2
-#                                    _3:
-#                                        ESA_S2AB: B12_20m
-#                        PLOT:
-#                            Mean_sr: Mean SR
+                    swir:
+                        PREFIXES:
+                            rg1_:
+                                SUFFIXES:
+                                    _1:
+                                        USGS_LS8: swir_1
+                                    _2:
+                                        ESA_S2AB: B11_20m
+                                        USGS_LS8: swir_2
+                                    _3:
+                                        ESA_S2AB: B12_20m
+                        PLOT:
+                            Mean_sr: Mean SR
     MAIN: data_comparison
     DATA_RECORD_MAX_LIMIT: ~
