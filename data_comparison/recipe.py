@@ -490,7 +490,17 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     (
                         temp_a_df, temp_b_df, temp_c_df
                     ) = _apply_indices_same_sensor_date_filtering(
-                        temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement, **ack)
+                        temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
+                        ack.get('indices_ssdf_ga_algorithm_ref'), **ack)
+                    (
+                        nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df
+                    ) = _apply_indices_same_sensor_date_filtering(
+                        temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
+                        'NBART', **ack)
+                    if len(nbart_temp_a_df.index) < len(temp_a_df.index):
+                        print('Auto-use NBART as SSDF algorithm reference due to fewer data points.')
+                        temp_a_df, temp_b_df, temp_c_df = (
+                            nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df)
 
                 # Save data files of plot data.
                 measurement_label = ack.get('acd')[
@@ -706,7 +716,7 @@ def _apply_date_filtering(temp_a_df, temp_b_df, temp_c_df, **ack):
 
 
 def _apply_indices_same_sensor_date_filtering(
-    temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement, **ack):
+    temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement, ssdf_algref, **ack):
 
     in_a_site_path = ack.get(
         'in_a_data_path'
@@ -750,7 +760,7 @@ def _apply_indices_same_sensor_date_filtering(
             'in_a_same_sensor_date_filter_source'
         ) + '_' + ack.get(
             'in_a_satellite_name'
-        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+        ) + '_' + ssdf_algref + '/'
     if ack.get('in_b_same_sensor_date_filter_source').upper() == 'GA':
         in_b_site_path = ack.get(
             'in_b_data_path'
@@ -760,7 +770,7 @@ def _apply_indices_same_sensor_date_filtering(
             'in_b_same_sensor_date_filter_source'
         ) + '_' + ack.get(
             'in_b_satellite_name'
-        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+        ) + '_' + ssdf_algref + '/'
     if ack.get('in_c_same_sensor_date_filter_source').upper() == 'GA':
         in_c_site_path = ack.get(
             'in_c_data_path'
@@ -770,7 +780,7 @@ def _apply_indices_same_sensor_date_filtering(
             'in_c_same_sensor_date_filter_source'
         ) + '_' + ack.get(
             'in_c_satellite_name'
-        ) + '_' + ack.get('indices_ssdf_ga_algorithm_ref') + '/'
+        ) + '_' + ssdf_algref + '/'
     this_in_a_site_path = in_a_site_path + ack.get('site')
     this_in_b_site_path = in_b_site_path + ack.get('site')
     this_in_c_site_path = in_c_site_path + ack.get('site')
