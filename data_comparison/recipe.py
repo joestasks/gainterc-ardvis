@@ -491,16 +491,17 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         temp_a_df, temp_b_df, temp_c_df
                     ) = _apply_indices_same_sensor_date_filtering(
                         temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
-                        ack.get('indices_ssdf_ga_algorithm_ref'), **ack)
-                    (
-                        nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df
-                    ) = _apply_indices_same_sensor_date_filtering(
-                        temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
-                        'NBART', **ack)
-                    if len(nbart_temp_a_df.index) < len(temp_a_df.index):
-                        print('Auto-use NBART as SSDF algorithm reference due to fewer data points.')
-                        temp_a_df, temp_b_df, temp_c_df = (
-                            nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df)
+                        ack.get('product'), **ack)
+                        #ack.get('indices_ssdf_ga_algorithm_ref'), **ack)
+                    #(
+                    #    nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df
+                    #) = _apply_indices_same_sensor_date_filtering(
+                    #    temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
+                    #    'NBART', **ack)
+                    #if len(nbart_temp_a_df.index) < len(temp_a_df.index) or len(nbart_temp_b_df.index) < len(temp_b_df.index) or len(nbart_temp_c_df.index) < len(temp_c_df.index):
+                    #    print('Auto-use NBART as SSDF algorithm reference due to fewer data points.')
+                    #    temp_a_df, temp_b_df, temp_c_df = (
+                    #        nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df)
 
                 # Save data files of plot data.
                 measurement_label = ack.get('acd')[
@@ -508,7 +509,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                 temp_a_df.to_csv(
                     ack.get(
                         'plot_target'
-                    ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
+                    ) + spec_ind.lower() + '_' + ack.get(
                         'in_a_source_name'
                     ).lower() + '_' + ack.get(
                         'in_a_satellite_name'
@@ -516,7 +517,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                 temp_b_df.to_csv(
                     ack.get(
                         'plot_target'
-                    ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
+                    ) + spec_ind.lower() + '_' + ack.get(
                         'in_b_source_name'
                     ).lower() + '_' + ack.get(
                         'in_b_satellite_name'
@@ -525,7 +526,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     temp_c_df.to_csv(
                         ack.get(
                             'plot_target'
-                        ) + spec_ind.lower() + '_' + measurement.lower() + '_' + ack.get(
+                        ) + spec_ind.lower() + '_' + ack.get(
                             'in_c_source_name'
                         ).lower() + '_' + ack.get(
                             'in_c_satellite_name'
@@ -549,6 +550,9 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         'in_a_satellite_name'
                     ),
                     c='r',
+                    marker='o',
+                    edgecolors='black',
+                    s=25,
                     ax=i_axs[0][0])
                 ax = temp_b_df.plot(
                     kind=ack.get(
@@ -561,6 +565,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         'in_b_satellite_name'
                     ),
                     c='b',
+                    marker='v',
                     ax=i_axs[0][0])
                 if in_c_indices_df is not None and temp_c_df is not None:
                     ax = temp_c_df.plot(
@@ -574,12 +579,14 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                             'in_c_satellite_name'
                         ),
                         c='g',
+                        marker='s',
+                        s=10,
                         ax=i_axs[0][0])
                 plt.ylabel(spec_ind)  # weird fix for scatter
 
                 plot_path = ack.get(
                     'plot_target'
-                ) + spec_ind.lower() + '_' + measurement.lower() + '_' + os.path.splitext(
+                ) + spec_ind.lower() + '_' + os.path.splitext(
                     ack.get('in_a_indices_file'))[0].lower() + (
                         (in_c_indices_df is not None and '_ab_' + ack.get(
                             'in_c_source_name'
@@ -993,10 +1000,11 @@ def _get_products(**ack):
 
     products = None
     if ack.get('in_a_product') is None:
-        if ack.get('in_a_source_name') == 'GA':
-            products = ack.get('ga_algorithms')
-        else:
-            products = list(('',))
+        products = ack.get('ga_algorithms')
+        #if ack.get('in_a_source_name') == 'GA':
+        #    products = ack.get('ga_algorithms')
+        #else:
+        #    products = list(('',))
     else:
         products = list((ack.get('in_a_product'),))
     print('Using these products:-')
@@ -1075,15 +1083,7 @@ def _set_plot_target(t_product, t_site, **ack):
             'in_b_source_name'
         ).lower() + '_' + ack.get(
             'in_b_satellite_name'
-        ).lower() + '/' + (
-            ((ack.get(
-                'in_a_source_name'
-            ).upper() == 'GA' or ack.get(
-                'in_b_source_name'
-            ).upper() == 'GA' or ack.get(
-                'in_c_source_name'
-            ).upper() == 'GA') and t_product.lower()) or ''
-        ) + '/' + t_site.lower() + '/')
+        ).lower() + '/' + t_product.lower() + '/' + t_site.lower() + '/')
 
     return ack
 
@@ -1122,7 +1122,7 @@ def _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack):
             m_axs[0][0].set(
                 xlabel=ack.get('date_col'),
                 ylabel='NBAR/LAM',
-                title='NBAR / LAM Ratio for ' + ga_band.split('_nbar_')[1] + ' at ' + site.replace('NBAR_', ''),
+                title='NBAR / LAM Ratio for ' + ((ack.get('in_a_source_name') == 'GA' and ga_band.split('_nbar_')[1]) or ga_band) + ' at ' + site.replace('NBAR_', ''),
                 xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
             if temp_a_df is not None:
@@ -1130,7 +1130,7 @@ def _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack):
                     kind=ack.get(
                         'measurements_plot_type'
                     ), x='Date_nbar',
-                    y='ratio', label=ga_band.split('_nbar_')[1],
+                    y='ratio', label=((ack.get('in_a_source_name') == 'GA' and ga_band.split('_nbar_')[1]) or ga_band),
                     #marker='o',
                     ax=m_axs[0][0],
                 #    sharex=m_axs[1][0]

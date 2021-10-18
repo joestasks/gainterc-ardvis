@@ -19,7 +19,7 @@ APP_SOURCE:
             DATA:
 
                 # Data input base directory.
-                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref
+                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref/output_60_and_NBR_sites
 
                 COMPARISON_SOURCES:
                     A:
@@ -31,7 +31,7 @@ APP_SOURCE:
                         SOURCE_NAME: GA
                         SATELLITE_NAME: S2A
                         PRODUCT: ~
-                        SITE: NSW_17
+                        SITE: NBR_8 #NSW_17
                         MEASUREMENTS_FILE: Measurements.csv
                         INDICES_FILE: indices.csv
                         SAME_SENSOR_DATE_FILTER_SOURCE: ESA
