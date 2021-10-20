@@ -83,6 +83,18 @@ def compare(path_to_config, config_file):
                     oa_band_mutations,
                     oa_plot_measurements,
                     **ack)
+                (
+                    esa_oa_band_mutations,
+                    esa_oa_plot_measurements
+                ) = _get_esa_oa_band_mutations(**ack)
+                (
+                    esa_oa_temp_a_df, esa_oa_temp_b_df
+                ) = _generate_oa_dfs(
+                    in_b_measurements_df,
+                    in_a_measurements_df,
+                    esa_oa_band_mutations,
+                    esa_oa_plot_measurements,
+                    **ack)
                 ratio_dfs = _generate_measurements_plots(
                     in_a_measurements_df,
                     in_b_measurements_df,
@@ -92,6 +104,10 @@ def compare(path_to_config, config_file):
                     oa_temp_b_df,
                     oa_band_mutations,
                     oa_plot_measurements,
+                    esa_oa_temp_a_df,
+                    esa_oa_temp_b_df,
+                    esa_oa_band_mutations,
+                    esa_oa_plot_measurements,
                     m_title, oa_title, **ack)
                 if product.upper() == 'NBAR':
                     nbar_ratio_dfs['NBAR_' + site] = ratio_dfs
@@ -128,6 +144,38 @@ def _get_df_from_csv(file_path, **ack):
         #print(new_df)
 
     return new_df
+
+
+def _get_esa_oa_band_mutations(**ack):
+    """Work out possible comparable band mutations."""
+
+    esa_oa_band_mutations = []
+    esa_oa_plot_measurements = []
+    esa_oas = [*ack.get('esa_oa_mappings')]
+
+    if len(esa_oas) > 0:
+        band_prefixes = [*ack.get('esa_oa_mappings')[esa_oas[0]]['PREFIXES']]
+        band_plot_props = [*ack.get('esa_oa_mappings')[esa_oas[0]]['PLOT']]
+        a_band_mut = ack.get('esa_oa_mappings')[esa_oas[0]
+            ]['PREFIXES'][
+                'Empty'
+            ]['SUFFIXES'][
+                'Empty'
+            ]['ESA_S2AB']
+        esa_oa_band_mutations.append([a_band_mut, a_band_mut, esa_oas[0]])
+        esa_oa_plot_measurements.append([
+            band_plot_props[0],
+            ack.get('esa_oa_mappings')[esa_oas[0]]['PLOT'][band_plot_props[0]]])
+        if len(esa_oas) > 1:
+            b_band_mut = ack.get('esa_oa_mappings')[esa_oas[1]
+                ]['PREFIXES'][
+                    'Empty'
+                ]['SUFFIXES'][
+                    'Empty'
+                ]['ESA_S2AB']
+            esa_oa_band_mutations[0][1] = b_band_mut
+
+    return (esa_oa_band_mutations, esa_oa_plot_measurements)
 
 
 def _get_band_mutations(**ack):
@@ -294,7 +342,10 @@ def _generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
 def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     band_mutations, plot_measurements,
     oa_in_a_df, oa_in_b_df,
-    oa_band_mutations, oa_plot_measurements, m_title, oa_title, **ack):
+    oa_band_mutations, oa_plot_measurements,
+    esa_oa_in_a_df, esa_oa_in_b_df,
+    esa_oa_band_mutations, esa_oa_plot_measurements,
+    m_title, oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
     plt.close('all')
@@ -306,7 +357,9 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
 
     if in_a_measurements_df is not None and in_b_measurements_df is not None:
         for idx_band_ab, band_ab in enumerate(band_mutations):
-            m_fig, m_axs = plt.subplots(2, 1, figsize=(12, 10), squeeze=False)
+            m_fig, m_axs = plt.subplots(
+                (len(esa_oa_band_mutations) > 0 and 3) or 2,
+                1, figsize=(12, 10), squeeze=False)
 
             temp_a_df, temp_b_df, temp_c_df = _prepare_ab_data(
                 in_a_measurements_df, in_b_measurements_df, None,
@@ -350,6 +403,39 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ].lower() + '_' + ack.get(
                     'in_a_source_name'
                 ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+
+            if len(esa_oa_band_mutations) > 0:
+                temp_a_df, esa_oa_temp_a_df, esa_oa_temp_b_df = _prepare_ab_data(
+                    temp_a_df, esa_oa_in_a_df, esa_oa_in_b_df,
+                    ack.get('band_col'),
+                    band_ab[0], esa_oa_band_mutations[0][0], esa_oa_band_mutations[0][1],
+                    ack.get('in_b_measurements_min_valid_pixel_percentage'),
+                    ack.get('in_b_measurements_min_valid_pixel_percentage'),
+                    ack.get('in_b_measurements_min_valid_pixel_percentage'),
+                    esa_oa_plot_measurements[0][0],
+                    ack.get('sr_measurements_date_filtering'), **ack)
+                if esa_oa_temp_a_df is not None:
+                    esa_oa_temp_a_df.to_csv(
+                        ack.get(
+                        'plot_target'
+                    ) + esa_oa_band_mutations[0][
+                        0
+                    ].lower() + '_' + esa_oa_plot_measurements[0][
+                        0
+                    ].lower() + '_' + ack.get(
+                        'in_b_source_name'
+                    ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                if esa_oa_temp_b_df is not None:
+                    esa_oa_temp_b_df.to_csv(
+                        ack.get(
+                        'plot_target'
+                    ) + esa_oa_band_mutations[0][
+                        1
+                    ].lower() + '_' + esa_oa_plot_measurements[0][
+                        0
+                    ].lower() + '_' + ack.get(
+                        'in_b_source_name'
+                    ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             # Save data files of plot data.
             ga_product_label = ''
@@ -439,6 +525,39 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     ][7:], ax=m_axs[1][0],
                 #    sharex=m_axs[0][0]
                 )
+            if len(esa_oa_band_mutations) > 0:
+                m_axs[2][0].set(
+                    xlabel=ack.get('date_col'),
+                    ylabel=ack.get('oa_plot_y_label'),
+                    title='ESA Additional Attribute(s)',
+                    xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+                )
+                if esa_oa_temp_a_df is not None:
+                    ax = esa_oa_temp_a_df.plot(
+                        kind=ack.get(
+                            'measurements_plot_type'
+                        ), x=ack.get('date_col'), y=esa_oa_plot_measurements[0][
+                            0
+                        ], label=esa_oa_plot_measurements[0][
+                            1
+                        ] + ' ' + esa_oa_band_mutations[0][
+                            0
+                        ], ax=m_axs[2][0],
+                    #    sharex=m_axs[0][0]
+                    )
+                if esa_oa_temp_b_df is not None:
+                    ax = esa_oa_temp_b_df.plot(
+                        kind=ack.get(
+                            'measurements_plot_type'
+                        ), x=ack.get('date_col'), y=esa_oa_plot_measurements[0][
+                            0
+                        ], label=esa_oa_plot_measurements[0][
+                            1
+                        ] + ' ' + esa_oa_band_mutations[0][
+                            1
+                        ], ax=m_axs[2][0],
+                    #    sharex=m_axs[0][0]
+                    )
 
             plot_path = ack.get(
                 'plot_target'
@@ -492,16 +611,6 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     ) = _apply_indices_same_sensor_date_filtering(
                         temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
                         ack.get('product'), **ack)
-                        #ack.get('indices_ssdf_ga_algorithm_ref'), **ack)
-                    #(
-                    #    nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df
-                    #) = _apply_indices_same_sensor_date_filtering(
-                    #    temp_a_df, temp_b_df, temp_c_df, spec_ind, measurement,
-                    #    'NBART', **ack)
-                    #if len(nbart_temp_a_df.index) < len(temp_a_df.index) or len(nbart_temp_b_df.index) < len(temp_b_df.index) or len(nbart_temp_c_df.index) < len(temp_c_df.index):
-                    #    print('Auto-use NBART as SSDF algorithm reference due to fewer data points.')
-                    #    temp_a_df, temp_b_df, temp_c_df = (
-                    #        nbart_temp_a_df, nbart_temp_b_df, nbart_temp_c_df)
 
                 # Save data files of plot data.
                 measurement_label = ack.get('acd')[
@@ -552,7 +661,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     c='r',
                     marker='o',
                     edgecolors='black',
-                    s=25,
+                    s=30,
                     ax=i_axs[0][0])
                 ax = temp_b_df.plot(
                     kind=ack.get(
@@ -908,7 +1017,6 @@ def _make_app_config_kwargs(app_c, subproject_name):
         "plot_indices": acd['PLOT_INDICES'],
         "sr_measurements_date_filtering": acd['SR_MEASUREMENTS_DATE_FILTERING'],
         "indices_same_sensor_date_filtering": acd['INDICES_SAME_SENSOR_DATE_FILTERING'],
-        "indices_ssdf_ga_algorithm_ref": acd['INDICES_SSDF_GA_ALGORITHM_REF'],
         "standardised_date_format": acd['STANDARDISED_DATE_FORMAT'],
         "plot_start_date": np.datetime64(acd['PLOT_START_DATE']),
         "plot_end_date": np.datetime64(acd['PLOT_END_DATE']),
@@ -926,6 +1034,7 @@ def _make_app_config_kwargs(app_c, subproject_name):
         "indices_col": acd['INDICES_COL'],
         "ga_oa_mappings": acd['GA_OA_MAPPINGS'],
         "ga_oas": [*acd['GA_OA_MAPPINGS']],
+        "esa_oa_mappings": ('ESA_OA_MAPPINGS' in [*acd] and acd['ESA_OA_MAPPINGS']) or {},
         "ga_band_mappings": acd['GA_BAND_MAPPINGS'],
         "ga_bands": [*acd['GA_BAND_MAPPINGS']],
         "in_a_data_path": acd['IN_BASE'],
@@ -1001,10 +1110,6 @@ def _get_products(**ack):
     products = None
     if ack.get('in_a_product') is None:
         products = ack.get('ga_algorithms')
-        #if ack.get('in_a_source_name') == 'GA':
-        #    products = ack.get('ga_algorithms')
-        #else:
-        #    products = list(('',))
     else:
         products = list((ack.get('in_a_product'),))
     print('Using these products:-')
@@ -1149,7 +1254,7 @@ def _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack):
             m_axs[1][0].set(
                 xlabel=ack.get('date_col'),
                 ylabel=ack.get('oa_plot_y_label'),
-                title='Additional Attributes',
+                title='GA Additional Attribute(s)',
                 xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
             )
             if oa_temp_a_df is not None:
