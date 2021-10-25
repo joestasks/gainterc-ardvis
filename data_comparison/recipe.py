@@ -124,10 +124,13 @@ def compare(path_to_config, config_file):
                     in_b_indices_df,
                     in_c_indices_df,
                     i_title, **ack)
-        ack = _set_all_sites_plot_target(product, **ack)
-        _prepare_min_max_mean(sr_diff_all_sites, band_mutations, **ack)
 
-    _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack)
+        if ack.get('plot_sr_measurements'):
+            ack = _set_all_sites_plot_target(product, **ack)
+            _prepare_min_max_mean(sr_diff_all_sites, band_mutations, **ack)
+
+    if ack.get('plot_sr_measurements'):
+        _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)

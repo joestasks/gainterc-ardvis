@@ -75,7 +75,7 @@ APP_SOURCE:
                 # Visualisation (plot) output base directory.
                 OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
 
-                PLOT_SR_MEASUREMENTS: True
+                PLOT_SR_MEASUREMENTS: False
                 PLOT_INDICES: True
                 SR_MEASUREMENTS_DATE_FILTERING: True
                 INDICES_SAME_SENSOR_DATE_FILTERING: True
