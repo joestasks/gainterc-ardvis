@@ -31,10 +31,12 @@ def compare(path_to_config, config_file):
 
     ack = _make_app_config_kwargs(app_configuration, subproject_name)
     plt.style.use(ack.get('plot_style'))
+    sr_diff_all_sites = {}
     nbar_ratio_dfs = {}
     lam_ratio_dfs = {}
     products = _get_products(**ack)
     for product in products:
+        sr_diff_all_sites[product] = pd.DataFrame(columns=('site', 'band', 'min', 'max', 'mean', 'acq'))
         sites, ack = _get_sites(product, **ack)
         for site in sites:
             ack['site'] = site
@@ -108,6 +110,7 @@ def compare(path_to_config, config_file):
                     esa_oa_temp_b_df,
                     esa_oa_band_mutations,
                     esa_oa_plot_measurements,
+                    sr_diff_all_sites,
                     m_title, oa_title, **ack)
                 if product.upper() == 'NBAR':
                     nbar_ratio_dfs['NBAR_' + site] = ratio_dfs
@@ -121,11 +124,48 @@ def compare(path_to_config, config_file):
                     in_b_indices_df,
                     in_c_indices_df,
                     i_title, **ack)
+        ack = _set_all_sites_plot_target(product, **ack)
+        _prepare_min_max_mean(sr_diff_all_sites, band_mutations, **ack)
 
     _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack)
 
     if next_subproject_name is not None:
         call_next_entry(next_subproject_module, next_entry, path_to_config, config_file)
+
+
+def _prepare_min_max_mean(sr_diff_all_sites, band_mutations, **ack):
+
+    all_sites_df = sr_diff_all_sites[
+        ack.get('product')
+    ][
+        sr_diff_all_sites[
+            ack.get('product')
+        ]['mean'].notna()
+    ]
+    all_sites_df.to_csv(
+        ack.get(
+            'all_sites_plot_target'
+        ) + 'all_sites_msr_diff_temp.csv',
+        index=False, sep=',', quotechar='|')
+    new_rows = []
+    for idx_band_ab, band_ab in enumerate(band_mutations):
+        band_id_df = all_sites_df.loc[all_sites_df['band'] == band_ab[0] + ':' + band_ab[1]]
+        band_id_df['mean'] = pd.to_numeric(band_id_df['mean'])
+        band_id_df['acq'] = pd.to_numeric(band_id_df['acq'])
+        band_id_df['mean_x_acq'] = band_id_df['mean'] * band_id_df['acq']
+        total_mean = band_id_df['mean_x_acq'].sum()
+        total_acq = band_id_df['acq'].sum()
+        all_sites_mean = total_mean / total_acq
+        new_rows.append([band_ab[0] + ':' + band_ab[1], band_id_df['min'].min(), band_id_df['max'].max(), all_sites_mean, str(total_acq)])
+
+    msr_diff_df = pd.DataFrame(new_rows, columns=('band', 'min', 'max', 'mean', 'acq'))
+    msr_diff_df.to_csv(
+        ack.get(
+            'all_sites_plot_target'
+        ) + 'summary_msr_diff_temp.csv',
+        index=False, sep=',', quotechar='|')
+
+    return True
 
 
 def _get_df_from_csv(file_path, **ack):
@@ -345,6 +385,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     oa_band_mutations, oa_plot_measurements,
     esa_oa_in_a_df, esa_oa_in_b_df,
     esa_oa_band_mutations, esa_oa_plot_measurements,
+    sr_diff_all_sites,
     m_title, oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
@@ -370,6 +411,18 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 None,
                 plot_measurements[idx_band_ab][0],
                 ack.get('sr_measurements_date_filtering'), **ack)
+            msr_diff_min, msr_diff_max, msr_diff_mean = _get_min_max_mean(temp_a_df, temp_b_df, plot_measurements[idx_band_ab][0], **ack)
+            msr_diff_df = pd.DataFrame(columns=('site', 'band', 'min', 'max', 'mean', 'acq'))
+            msr_diff_df.loc[0] = [ack.get('site'), band_ab[0] + ':' + band_ab[1], msr_diff_min, msr_diff_max, msr_diff_mean, str(len(temp_a_df.index))]
+            sr_diff_all_sites[ack.get('product')] = sr_diff_all_sites[ack.get('product')].append([msr_diff_df])
+
+            msr_diff_df.to_csv(
+                ack.get(
+                    'plot_target'
+                ) + band_ab[0].lower() + '_' + plot_measurements[
+                    idx_band_ab
+                ][0].lower() + '_diff_temp.csv',
+                index=False, sep=',', quotechar='|')
 
             if len(oa_band_mutations) > 0:
                 temp_a_df, oa_temp_a_df, oa_temp_b_df = _prepare_ab_data(
@@ -493,6 +546,13 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ax=m_axs[0][0],
             #    sharex=m_axs[1][0]
             )
+            extra_ax = m_axs[0][0].twinx()
+            extra_ax.grid(None)
+            extra_ax.axhline(y=msr_diff_max, label='Max. = ' + str(msr_diff_max), color="gray", linestyle="--", alpha=0.35)
+            extra_ax.axhline(y=msr_diff_mean, label='Mean = ' + str(msr_diff_mean), color="darkgreen", linestyle=":", alpha=0.5)
+            extra_ax.axhline(y=msr_diff_min, label='Min. = ' + str(msr_diff_min), color="gray", linestyle="--", alpha=0.35)
+            extra_ax.set(ylabel=plot_measurements[idx_band_ab][1] + ' difference')
+            extra_ax.legend(prop={'size': 8})
             m_axs[1][0].set(
                 xlabel=ack.get('date_col'),
                 ylabel=ack.get('oa_plot_y_label'),
@@ -829,6 +889,38 @@ def _apply_date_filtering(temp_a_df, temp_b_df, temp_c_df, **ack):
             '_' + ack.get('in_c_source_name') + ack.get('in_c_satellite_name'))
 
     return (temp_a_df, temp_b_df, temp_c_df)
+
+
+def _get_min_max_mean(temp_a_df, temp_b_df, y_col_name, **ack):
+
+    res = pd.merge(
+        temp_a_df.assign(
+            grouper=pd.to_datetime(
+                temp_a_df[ack.get('date_col')]
+            ).dt.to_period('D')),
+        temp_b_df.assign(
+            grouper=pd.to_datetime(
+                temp_b_df[ack.get('date_col')]
+            ).dt.to_period('D')),
+        how='inner', on='grouper',
+        suffixes=('_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name'),
+                  '_' + ack.get('in_b_source_name') + ack.get('in_b_satellite_name')))
+    res['msr_diff'] = (
+        res[
+            y_col_name + '_' + ack.get('in_a_source_name') + ack.get('in_a_satellite_name')
+        ] - res[
+            y_col_name + '_' + ack.get('in_b_source_name') + ack.get('in_b_satellite_name')
+        ]
+    )
+    msr_diff_min = res['msr_diff'].min()
+    msr_diff_max = res['msr_diff'].max()
+    msr_diff_mean = res['msr_diff'].mean()
+    #print(msr_diff_min)
+    #print(msr_diff_max)
+    #print(msr_diff_mean)
+    #print(res)
+
+    return (msr_diff_min, msr_diff_max, msr_diff_mean)
 
 
 def _apply_indices_same_sensor_date_filtering(
@@ -1189,6 +1281,23 @@ def _set_plot_target(t_product, t_site, **ack):
         ).lower() + '_' + ack.get(
             'in_b_satellite_name'
         ).lower() + '/' + t_product.lower() + '/' + t_site.lower() + '/')
+
+    return ack
+
+
+def _set_all_sites_plot_target(t_product, **ack):
+
+    ack['all_sites_plot_target'] = (ack.get(
+            'out_path'
+        ) + '/' + ack.get(
+            'in_a_source_name'
+        ).lower() + '_' + ack.get(
+            'in_a_satellite_name'
+        ).lower() + '_vs_' + ack.get(
+            'in_b_source_name'
+        ).lower() + '_' + ack.get(
+            'in_b_satellite_name'
+        ).lower() + '/' + t_product.lower() + '/')
 
     return ack
 
