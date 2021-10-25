@@ -26,7 +26,7 @@ APP_SOURCE:
 
                         # Data input A for comparison.
                         # Note: if using GA as a source, it should be input A.
-                        # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
+                        # Specifying PRODUCT will override GA_ALGORITHMS.
                         PREFIX: output
                         SOURCE_NAME: USGS
                         SATELLITE_NAME: LS8
@@ -79,7 +79,6 @@ APP_SOURCE:
                 PLOT_INDICES: True
                 SR_MEASUREMENTS_DATE_FILTERING: True
                 INDICES_SAME_SENSOR_DATE_FILTERING: True
-                INDICES_SSDF_GA_ALGORITHM_REF: NBAR
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
                 PLOT_START_DATE: "2018-12-01"
                 PLOT_END_DATE: "2021-06-01"
@@ -132,6 +131,23 @@ APP_SOURCE:
                                 SUFFIXES:
                                     Empty:
                                         GA: rg1_oa_solar_zenith
+                        PLOT:
+                            Mean_sr: Mean SR
+                ESA_OA_MAPPINGS:
+                    AOT_20m:
+                        PREFIXES:
+                            Empty:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: AOT_20m
+                        PLOT:
+                            Mean_sr: Mean SR
+                    WVP_20m:
+                        PREFIXES:
+                            Empty:
+                                SUFFIXES:
+                                    Empty:
+                                        ESA_S2AB: WVP_20m
                         PLOT:
                             Mean_sr: Mean SR
                 GA_BAND_MAPPINGS:

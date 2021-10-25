@@ -26,7 +26,7 @@ APP_SOURCE:
 
                         # Data input A for comparison.
                         # Note: if using GA as a source, it should be input A.
-                        # Specifying IN_A_PRODUCT will override GA_ALGORITHMS.
+                        # Specifying PRODUCT will override GA_ALGORITHMS.
                         PREFIX: output
                         SOURCE_NAME: GA
                         SATELLITE_NAME: LS8
@@ -63,7 +63,6 @@ APP_SOURCE:
                 PLOT_INDICES: True
                 SR_MEASUREMENTS_DATE_FILTERING: True
                 INDICES_SAME_SENSOR_DATE_FILTERING: True
-                INDICES_SSDF_GA_ALGORITHM_REF: NBAR
                 STANDARDISED_DATE_FORMAT: "%Y-%m-%dT%H:%M:%S"
                 PLOT_START_DATE: "2018-12-01"
                 PLOT_END_DATE: "2021-06-01"
