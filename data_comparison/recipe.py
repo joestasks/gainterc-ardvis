@@ -108,7 +108,7 @@ def compare(path_to_config, config_file):
                     in_b_indices_df,
                     in_c_indices_df,
                     i_title, **ack)
-        ack = _set_all_sites_plot_target(product, site, **ack)
+        ack = _set_all_sites_plot_target(product, **ack)
         _prepare_min_max_mean(sr_diff_all_sites, band_mutations, **ack)
 
     _plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, **ack)
@@ -1180,7 +1180,7 @@ def _set_plot_target(t_product, t_site, **ack):
     return ack
 
 
-def _set_all_sites_plot_target(t_product, t_site, **ack):
+def _set_all_sites_plot_target(t_product, **ack):
 
     ack['all_sites_plot_target'] = (ack.get(
             'out_path'
