@@ -549,13 +549,14 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 ax=m_axs[0][0],
             #    sharex=m_axs[1][0]
             )
-            extra_ax = m_axs[0][0].twinx()
-            extra_ax.grid(None)
-            extra_ax.axhline(y=msr_diff_max, label='Max. = ' + str(msr_diff_max), color="gray", linestyle="--", alpha=0.35)
-            extra_ax.axhline(y=msr_diff_mean, label='Mean = ' + str(msr_diff_mean), color="darkgreen", linestyle=":", alpha=0.5)
-            extra_ax.axhline(y=msr_diff_min, label='Min. = ' + str(msr_diff_min), color="gray", linestyle="--", alpha=0.35)
-            extra_ax.set(ylabel=plot_measurements[idx_band_ab][1] + ' difference')
-            extra_ax.legend(prop={'size': 8})
+            m_axs[0][0].legend(loc=2)
+            #extra_ax = m_axs[0][0].twinx()
+            #extra_ax.grid(None)
+            #extra_ax.axhline(y=msr_diff_max, label='Max. = ' + str(msr_diff_max), color="gray", linestyle="--", alpha=0.35)
+            #extra_ax.axhline(y=msr_diff_mean, label='Mean = ' + str(msr_diff_mean), color="darkgreen", linestyle=":", alpha=0.5)
+            #extra_ax.axhline(y=msr_diff_min, label='Min. = ' + str(msr_diff_min), color="gray", linestyle="--", alpha=0.35)
+            #extra_ax.set(ylabel=plot_measurements[idx_band_ab][1] + ' difference')
+            #extra_ax.legend(prop={'size': 8})
             m_axs[1][0].set(
                 xlabel=ack.get('date_col'),
                 ylabel=ack.get('oa_plot_y_label'),
@@ -1088,8 +1089,6 @@ def _get_plot_titles(**ack):
             'in_c_source_name'
         ) + ' ' + ack.get(
             'in_c_satellite_name'
-        ) + ack.get(
-            'product_label'
         ) + ' at ' + ack.get(
             'site'
         )
