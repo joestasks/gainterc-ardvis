@@ -70,7 +70,7 @@ def compare(path_to_config, config_file):
             ack = _set_plot_target(product, site, **ack)
             print('Making plot output directory: ' + ack.get('plot_target'))
             Path(os.path.dirname(ack.get('plot_target'))).mkdir(parents=True, exist_ok=True)
-            m_title, oa_title, i_title = _get_plot_titles(**ack)
+            m_title, oa_title, i_title, esa_oa_title = _get_plot_titles(**ack)
 
             if ack.get('plot_sr_measurements'):
                 (
@@ -111,7 +111,7 @@ def compare(path_to_config, config_file):
                     esa_oa_band_mutations,
                     esa_oa_plot_measurements,
                     sr_diff_all_sites,
-                    m_title, oa_title, **ack)
+                    m_title, oa_title, esa_oa_title, **ack)
                 if product.upper() == 'NBAR':
                     nbar_ratio_dfs['NBAR_' + site] = ratio_dfs
                 elif product.upper() == 'LAM':
@@ -389,7 +389,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     esa_oa_in_a_df, esa_oa_in_b_df,
     esa_oa_band_mutations, esa_oa_plot_measurements,
     sr_diff_all_sites,
-    m_title, oa_title, **ack):
+    m_title, oa_title, esa_oa_title, **ack):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
     plt.close('all')
@@ -569,9 +569,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                         'measurements_plot_type'
                     ), x=ack.get('date_col'), y=oa_plot_measurements[0][
                         0
-                    ], label=oa_plot_measurements[0][
-                        1
-                    ] + ' ' + oa_band_mutations[0][
+                    ], label=oa_band_mutations[0][
                         0
                     ][7:], ax=m_axs[1][0],
                 #    sharex=m_axs[0][0]
@@ -582,9 +580,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                         'measurements_plot_type'
                     ), x=ack.get('date_col'), y=oa_plot_measurements[0][
                         0
-                    ], label=oa_plot_measurements[0][
-                        1
-                    ] + ' ' + oa_band_mutations[0][
+                    ], label=oa_band_mutations[0][
                         1
                     ][7:], ax=m_axs[1][0],
                 #    sharex=m_axs[0][0]
@@ -593,7 +589,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 m_axs[2][0].set(
                     xlabel=ack.get('date_col'),
                     ylabel=ack.get('oa_plot_y_label'),
-                    title='ESA Additional Attribute(s)',
+                    title=esa_oa_title,
                     xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
                 )
                 if esa_oa_temp_a_df is not None:
@@ -602,9 +598,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                             'measurements_plot_type'
                         ), x=ack.get('date_col'), y=esa_oa_plot_measurements[0][
                             0
-                        ], label=esa_oa_plot_measurements[0][
-                            1
-                        ] + ' ' + esa_oa_band_mutations[0][
+                        ], label=esa_oa_band_mutations[0][
                             0
                         ], ax=m_axs[2][0],
                     #    sharex=m_axs[0][0]
@@ -615,9 +609,7 @@ def _generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                             'measurements_plot_type'
                         ), x=ack.get('date_col'), y=esa_oa_plot_measurements[0][
                             0
-                        ], label=esa_oa_plot_measurements[0][
-                            1
-                        ] + ' ' + esa_oa_band_mutations[0][
+                        ], label=esa_oa_band_mutations[0][
                             1
                         ], ax=m_axs[2][0],
                     #    sharex=m_axs[0][0]
@@ -760,13 +752,7 @@ def _generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                 plot_path = ack.get(
                     'plot_target'
                 ) + spec_ind.lower() + '_' + os.path.splitext(
-                    ack.get('in_a_indices_file'))[0].lower() + (
-                        (in_c_indices_df is not None and '_ab_' + ack.get(
-                            'in_c_source_name'
-                        ).lower() + '_' + ack.get(
-                            'in_c_satellite_name'
-                        ).lower()) or ''
-                    ) + '.png'
+                    ack.get('in_a_indices_file'))[0].lower() + '.png'
                 print('Writing plot image: ' + plot_path)
                 i_fig.autofmt_xdate()
                 #plt.show()
@@ -1092,8 +1078,15 @@ def _get_plot_titles(**ack):
         ) + ' at ' + ack.get(
             'site'
         )
+    esa_oa_title = ack.get(
+        'in_b_source_name'
+    ) + ' ' + ack.get(
+        'in_b_satellite_name'
+    ) + ' at ' + ack.get(
+        'site'
+    )
 
-    return (m_title, oa_title, i_title)
+    return (m_title, oa_title, i_title, esa_oa_title)
 
 
 def _make_app_config_kwargs(app_c, subproject_name):
