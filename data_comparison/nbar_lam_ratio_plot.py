@@ -1,10 +1,17 @@
+"""
+
+
+
+"""
 
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plot_plan, plan, **ack):
 
+    plt.style.use(plan.get('plot_style'))
     plt.close('all')
     temp_a_df = None
     temp_b_df = None

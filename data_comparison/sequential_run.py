@@ -1,4 +1,4 @@
-"""Comparison Logic
+"""
 
 
 
@@ -34,40 +34,40 @@ def all(plans, **ack):
     lam_ratio_dfs = {}
 
     for plan in plans:
-        if plan.product not in [*sr_diff_all_sites]:
-            sr_diff_all_sites[plan.product] = pd.DataFrame(columns=SR_DIFF_ALL_SITES_HEADER)
-        print('Working on product: ' + plan.product)
-        print('Working on site: ' + plan.site)
-        this_in_a_site_path = plan.in_a_site_path + plan.site
-        this_in_b_site_path = plan.in_b_site_path + plan.site
-        this_in_c_site_path = plan.in_c_site_path + plan.site
-        in_a_measurements_path = Path(this_in_a_site_path + '/' + plan.in_a_sr_measurements_file)
-        in_b_measurements_path = Path(this_in_b_site_path + '/' + plan.in_b_sr_measurements_file)
-        in_a_indices_path = Path(this_in_a_site_path + '/' + plan.in_a_indices_file)
-        in_b_indices_path = Path(this_in_b_site_path + '/' + plan.in_b_indices_file)
-        in_c_indices_path = Path(this_in_c_site_path + '/' + plan.in_c_indices_file)
+        if plan.get('product') not in [*sr_diff_all_sites]:
+            sr_diff_all_sites[plan.get('product')] = pd.DataFrame(columns=SR_DIFF_ALL_SITES_HEADER)
+        print('Working on product: ' + plan.get('product'))
+        print('Working on site: ' + plan.get('site'))
+        this_in_a_site_path = plan.get('in_a_site_path') + plan.get('site')
+        this_in_b_site_path = plan.get('in_b_site_path') + plan.get('site')
+        this_in_c_site_path = plan.get('in_c_site_path') + plan.get('site')
+        in_a_measurements_path = Path(this_in_a_site_path + '/' + plan.get('in_a_sr_measurements_file'))
+        in_b_measurements_path = Path(this_in_b_site_path + '/' + plan.get('in_b_sr_measurements_file'))
+        in_a_indices_path = Path(this_in_a_site_path + '/' + plan.get('in_a_indices_file'))
+        in_b_indices_path = Path(this_in_b_site_path + '/' + plan.get('in_b_indices_file'))
+        in_c_indices_path = Path(this_in_c_site_path + '/' + plan.get('in_c_indices_file'))
         print('Measurements input A: ' + str(in_a_measurements_path))
         print('Measurements input B: ' + str(in_b_measurements_path))
         print('Indices input A: ' + str(in_a_indices_path))
         print('Indices input B: ' + str(in_b_indices_path))
-        if plan.in_c_source_name:
+        if plan.get('in_c_source_name'):
             print('Indices input C: ' + str(in_c_indices_path))
         print('Making DataFrame from: ' + str(in_a_measurements_path))
-        in_a_measurements_df = generate_df.get_df_from_csv(in_a_measurements_path, plan.rec_max)
+        in_a_measurements_df = generate_df.get_df_from_csv(in_a_measurements_path, plan.get('rec_max'))
         print('Making DataFrame from: ' + str(in_b_measurements_path))
-        in_b_measurements_df = generate_df.get_df_from_csv(in_b_measurements_path, plan.rec_max)
+        in_b_measurements_df = generate_df.get_df_from_csv(in_b_measurements_path, plan.get('rec_max'))
         print('Making DataFrame from: ' + str(in_a_indices_path))
-        in_a_indices_df = generate_df.get_df_from_csv(in_a_indices_path, plan.rec_max)
+        in_a_indices_df = generate_df.get_df_from_csv(in_a_indices_path, plan.get('rec_max'))
         print('Making DataFrame from: ' + str(in_b_indices_path))
-        in_b_indices_df = generate_df.get_df_from_csv(in_b_indices_path, plan.rec_max)
+        in_b_indices_df = generate_df.get_df_from_csv(in_b_indices_path, plan.get('rec_max'))
         in_c_indices_df = None
-        if plan.in_c_source_name:
+        if plan.get('in_c_source_name'):
             print('Making DataFrame from: ' + str(in_c_indices_path))
-            in_c_indices_df = generate_df.get_df_from_csv(in_c_indices_path, plan.rec_max)
-        print('Making plot output directory: ' + plan.plot_target)
-        Path(os.path.dirname(plan.plot_target)).mkdir(parents=True, exist_ok=True)
+            in_c_indices_df = generate_df.get_df_from_csv(in_c_indices_path, plan.get('rec_max'))
+        print('Making plot output directory: ' + plan.get('plot_target'))
+        Path(os.path.dirname(plan.get('plot_target'))).mkdir(parents=True, exist_ok=True)
 
-        if plan.plot_sr_measurements:
+        if plan.get('plot_sr_measurements'):
             (
                 band_mutations, oa_band_mutations,
                 plot_measurements, oa_plot_measurements
@@ -108,28 +108,33 @@ def all(plans, **ack):
                 esa_oa_band_mutations,
                 esa_oa_plot_measurements,
                 sr_diff_all_sites,
-                plan.srm_title, plan.srm_oa_title, plan.srm_esa_oa_title,
+                plan.get('srm_title'),
+                plan.get('srm_oa_title'),
+                plan.get('srm_esa_oa_title'),
                 SR_DIFF_ALL_SITES_HEADER,
                 prepare_and_filter,
                 plan)
-            if plan.product.upper() == 'NBAR':
-                nbar_ratio_dfs['NBAR_' + plan.site] = ratio_dfs
-            elif plan.product.upper() == 'LAM':
-                lam_ratio_dfs['NBAR_' + plan.site] = ratio_dfs
+            if plan.get('product').upper() == 'NBAR':
+                nbar_ratio_dfs['NBAR_' + plan.get('site')] = ratio_dfs
+            elif plan.get('product').upper() == 'LAM':
+                lam_ratio_dfs['NBAR_' + plan.get('site')] = ratio_dfs
             else:
                 False  # discard
 
-        if plan.plot_indices:
+        if plan.get('plot_indices'):
             indices_plot.generate_indices_plots(
                 in_a_indices_df,
                 in_b_indices_df,
                 in_c_indices_df,
-                plan.indices_title, generate_df, plan)
+                plan.get('indices_title'),
+                prepare_and_filter, generate_df, plan)
 
-        if plan.plot_sr_measurements:
-            prepare_and_filter.prepare_min_max_mean(sr_diff_all_sites, band_mutations, SR_DIFF_SUMMARY_HEADER, plan)
+        if plan.get('plot_sr_measurements'):
+            prepare_and_filter.prepare_min_max_mean(
+                sr_diff_all_sites, band_mutations, SR_DIFF_SUMMARY_HEADER, plan)
 
-        if plan.plot_sr_measurements:
-            nbar_lam_ratio_plot.plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plan, **ack)
+        if plan.get('plot_sr_measurements'):
+            nbar_lam_ratio_plot.plot_nbar_lam_ratio(
+                nbar_ratio_dfs, lam_ratio_dfs, plan, **ack)
 
     return True

@@ -1,12 +1,19 @@
+"""
+
+
+
+"""
 
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
     i_title, prepare_and_filter, generate_df, plan):
     """Plot indices and write the DataFrames used to name matched data files."""
 
+    plt.style.use(plan.get('plot_style'))
     plt.close('all')
 
     if in_a_indices_df is not None and in_b_indices_df is not None:
@@ -81,7 +88,7 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     ),
                     c='r',
                     marker='o',
-                    edgecolors='blplan',
+                    edgecolors='black',
                     s=30,
                     ax=i_axs[0][0])
                 ax = temp_b_df.plot(

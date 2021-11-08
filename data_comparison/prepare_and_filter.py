@@ -1,6 +1,14 @@
+"""
 
+
+
+"""
+
+from pathlib import Path
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import numpy as np
+
 
 def prepare_ab_data(in_a_df, in_b_df, in_c_df,
     extract_col, extract_a_val, extract_b_val, extract_c_val,
@@ -42,16 +50,16 @@ def prepare_ab_data(in_a_df, in_b_df, in_c_df,
         temp_a_df, temp_b_df, temp_c_df = _apply_date_filtering(
             temp_a_df, temp_b_df, temp_c_df, plan)
 
-    temp_a_df[plan.date_col] = pd.to_datetime(
-        temp_a_df[plan.date_col],
-        format=plan.standardised_date_format)
-    temp_b_df[plan.date_col] = pd.to_datetime(
-        temp_b_df[plan.date_col],
-        format=plan.standardised_date_format)
+    temp_a_df[plan.get('date_col')] = pd.to_datetime(
+        temp_a_df[plan.get('date_col')],
+        format=plan.get('standardised_date_format'))
+    temp_b_df[plan.get('date_col')] = pd.to_datetime(
+        temp_b_df[plan.get('date_col')],
+        format=plan.get('standardised_date_format'))
     if temp_c_df is not None:
-        temp_c_df[plan.date_col] = pd.to_datetime(
-            temp_c_df[plan.date_col],
-            format=plan.standardised_date_format)
+        temp_c_df[plan.get('date_col')] = pd.to_datetime(
+            temp_c_df[plan.get('date_col')],
+            format=plan.get('standardised_date_format'))
     #print(temp_a_df.dtypes)
     #print(temp_a_df)
     #print(temp_b_df.dtypes)
@@ -66,62 +74,62 @@ def _apply_date_filtering(temp_a_df, temp_b_df, temp_c_df, plan):
     """Apply date filtering to match dates and ensure the same number of
        aligned data points from each data set."""
 
-    temp_a_df[plan.date_col] = pd.to_datetime(
-        temp_a_df[plan.date_col],
-        format=plan.standardised_date_format).dt.date
-    temp_b_df[plan.date_col] = pd.to_datetime(
-        temp_b_df[plan.date_col],
-        format=plan.standardised_date_format).dt.date
+    temp_a_df[plan.get('date_col')] = pd.to_datetime(
+        temp_a_df[plan.get('date_col')],
+        format=plan.get('standardised_date_format')).dt.date
+    temp_b_df[plan.get('date_col')] = pd.to_datetime(
+        temp_b_df[plan.get('date_col')],
+        format=plan.get('standardised_date_format')).dt.date
     res = pd.merge(
         temp_a_df.assign(
             grouper=pd.to_datetime(
-                temp_a_df[plan.date_col]
+                temp_a_df[plan.get('date_col')]
             ).dt.to_period('D')),
         temp_b_df.assign(
             grouper=pd.to_datetime(
-                temp_b_df[plan.date_col]
+                temp_b_df[plan.get('date_col')]
             ).dt.to_period('D')),
         how='inner', on='grouper',
-        suffixes=('_' + plan.in_a_source_name + plan.in_a_satellite_name,
-                  '_' + plan.in_b_source_name + plan.in_b_satellite_name))
+        suffixes=('_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'),
+                  '_' + plan.get('in_b_source_name') + plan.get('in_b_satellite_name')))
     temp_a_df = res.loc[:, res.columns.str.endswith(
-        '_' + plan.in_a_source_name + plan.in_a_satellite_name)]
+        '_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'))]
     temp_a_df.columns = temp_a_df.columns.str.rstrip(
-        '_' + plan.in_a_source_name + plan.in_a_satellite_name)
+        '_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'))
     temp_b_df = res.loc[:, res.columns.str.endswith(
-        '_' + plan.in_b_source_name + plan.in_b_satellite_name)]
+        '_' + plan.get('in_b_source_name') + plan.get('in_b_satellite_name'))]
     temp_b_df.columns = temp_b_df.columns.str.rstrip(
-        '_' + plan.in_b_source_name + plan.in_b_satellite_name)
+        '_' + plan.get('in_b_source_name') + plan.get('in_b_satellite_name'))
 
     if temp_c_df is not None:
-        temp_c_df[plan.date_col] = pd.to_datetime(
-            temp_c_df[plan.date_col],
-            format=plan.standardised_date_format).dt.date
+        temp_c_df[plan.get('date_col')] = pd.to_datetime(
+            temp_c_df[plan.get('date_col')],
+            format=plan.get('standardised_date_format')).dt.date
         res2 = pd.merge(
             temp_a_df.assign(
                 grouper=pd.to_datetime(
-                    temp_a_df[plan.date_col]
+                    temp_a_df[plan.get('date_col')]
                 ).dt.to_period('D')),
             temp_c_df.assign(
                 grouper=pd.to_datetime(
-                    temp_c_df[plan.date_col]
+                    temp_c_df[plan.get('date_col')]
                 ).dt.to_period('D')),
             how='inner', on='grouper',
-            suffixes=('_' + plan.in_a_source_name + plan.in_a_satellite_name,
-                      '_' + plan.in_c_source_name + plan.in_c_satellite_name))
+            suffixes=('_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'),
+                      '_' + plan.get('in_c_source_name') + plan.get('in_c_satellite_name')))
         temp_a_df = res2.loc[:, res2.columns.str.endswith(
-            '_' + plan.in_a_source_name + plan.in_a_satellite_name)]
+            '_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'))]
         temp_a_df.columns = temp_a_df.columns.str.rstrip(
-            '_' + plan.in_a_source_name + plan.in_a_satellite_name)
+            '_' + plan.get('in_a_source_name') + plan.get('in_a_satellite_name'))
         temp_c_df = res2.loc[:, res2.columns.str.endswith(
-            '_' + plan.in_c_source_name + plan.in_c_satellite_name)]
+            '_' + plan.get('in_c_source_name') + plan.get('in_c_satellite_name'))]
         temp_c_df.columns = temp_c_df.columns.str.rstrip(
-            '_' + plan.in_c_source_name + plan.in_c_satellite_name)
+            '_' + plan.get('in_c_source_name') + plan.get('in_c_satellite_name'))
 
     return (temp_a_df, temp_b_df, temp_c_df)
 
 
-def get_min_max_mean(temp_a_df, temp_b_df, y_col_name, **plan):
+def get_min_max_mean(temp_a_df, temp_b_df, y_col_name, plan):
 
     res = pd.merge(
         temp_a_df.assign(
@@ -225,11 +233,11 @@ def apply_indices_same_sensor_date_filtering(
     in_a_indices_path = Path(this_in_a_site_path + '/' + plan.get('in_a_indices_file'))
     in_b_indices_path = Path(this_in_b_site_path + '/' + plan.get('in_b_indices_file'))
     in_c_indices_path = Path(this_in_c_site_path + '/' + plan.get('in_c_indices_file'))
-    in_a_indices_df = _get_df_from_csv(in_a_indices_path, **plan)
-    in_b_indices_df = _get_df_from_csv(in_b_indices_path, **plan)
+    in_a_indices_df = generate_df.get_df_from_csv(in_a_indices_path, plan.get('rec_max'))
+    in_b_indices_df = generate_df.get_df_from_csv(in_b_indices_path, plan.get('rec_max'))
     in_c_indices_df = None
     if plan.get('in_c_source_name'):
-        in_c_indices_df = _get_df_from_csv(in_c_indices_path, **plan)
+        in_c_indices_df = generate_df.get_df_from_csv(in_c_indices_path, plan.get('rec_max'))
     #print(in_a_indices_path)
     #print(in_b_indices_path)
     #print(in_c_indices_path)
@@ -270,7 +278,6 @@ def apply_indices_same_sensor_date_filtering(
             True, plan)
 
     return (new_temp_a_df, new_temp_b_df, new_temp_c_df)
-
 
 
 def prepare_min_max_mean(sr_diff_all_sites, band_mutations, msr_diff_header, plan):

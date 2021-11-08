@@ -1,3 +1,8 @@
+"""
+
+
+
+"""
 
 import pandas as pd
 
@@ -7,7 +12,7 @@ def p2f(x):
 
 
 def get_df_from_csv(file_path, rec_max):
-    """Read CSVs."""
+    """Read CSV file and return DataFrame."""
 
     new_df = None
     if file_path.is_file():
@@ -35,13 +40,13 @@ def generate_oa_dfs(in_a_measurements_df, in_b_measurements_df,
 
         oa_temp_a_df, oa_temp_b_df, oa_temp_c_df = prepare_and_filter.prepare_ab_data(
             in_a_measurements_df, in_a_measurements_df, None,
-            plan.band_col,
+            plan.get('band_col'),
             oa_band_mutations[0][0], oa_band_mutations[0][1], None,
-            plan.in_a_measurements_min_valid_pixel_percentage,
-            plan.in_a_measurements_min_valid_pixel_percentage,
+            plan.get('in_a_measurements_min_valid_pixel_percentage'),
+            plan.get('in_a_measurements_min_valid_pixel_percentage'),
             None,
             oa_plot_measurements[0][0],
-            plan.sr_measurements_date_filtering, plan)
+            plan.get('sr_measurements_date_filtering'), plan)
 
         # Remove duplicate data set to prevent plotting;
         # occurs when single OA only.

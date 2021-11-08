@@ -8,11 +8,6 @@ import os
 import sys
 import importlib
 import importlib.util
-from pathlib import Path
-import pandas as pd
-pd.options.mode.chained_assignment = None
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 def compare(path_to_config, config_file):

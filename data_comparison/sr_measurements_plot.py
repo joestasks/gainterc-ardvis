@@ -1,7 +1,13 @@
+"""
+
+
+
+"""
 
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+
 
 def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     band_mutations, plot_measurements,
@@ -13,7 +19,7 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     m_title, oa_title, esa_oa_title, msr_diff_header, prepare_and_filter, plan):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
-    plt.style.use(plan.plot_style)
+    plt.style.use(plan.get('plot_style'))
     plt.close('all')
     temp_a_df = None
     temp_b_df = None
@@ -29,20 +35,20 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
 
             temp_a_df, temp_b_df, temp_c_df = prepare_and_filter.prepare_ab_data(
                 in_a_measurements_df, in_b_measurements_df, None,
-                plan.band_col,
+                plan.get('band_col'),
                 band_ab[0], band_ab[1], None,
-                plan.in_a_measurements_min_valid_pixel_percentage,
-                plan.in_b_measurements_min_valid_pixel_percentage,
+                plan.get('in_a_measurements_min_valid_pixel_percentage'),
+                plan.get('in_b_measurements_min_valid_pixel_percentage'),
                 None,
                 plot_measurements[idx_band_ab][0],
-                plan.sr_measurements_date_filtering, plan)
+                plan.get('sr_measurements_date_filtering'), plan)
             msr_diff_min, msr_diff_max, msr_diff_mean = prepare_and_filter.get_min_max_mean(temp_a_df, temp_b_df, plot_measurements[idx_band_ab][0], plan)
             msr_diff_df = pd.DataFrame(columns=msr_diff_header)
-            msr_diff_df.loc[0] = [plan.site, band_ab[0] + ':' + band_ab[1], msr_diff_min, msr_diff_max, msr_diff_mean, str(len(temp_a_df.index))]
-            sr_diff_all_sites[plan.product] = sr_diff_all_sites[plan.product].append([msr_diff_df])
+            msr_diff_df.loc[0] = [plan.get('site'), band_ab[0] + ':' + band_ab[1], msr_diff_min, msr_diff_max, msr_diff_mean, str(len(temp_a_df.index))]
+            sr_diff_all_sites[plan.get('product')] = sr_diff_all_sites[plan.get('product')].append([msr_diff_df])
 
             msr_diff_df.to_csv(
-                plan.plot_target + band_ab[0].lower() + '_' + plot_measurements[
+                plan.get('plot_target') + band_ab[0].lower() + '_' + plot_measurements[
                     idx_band_ab
                 ][0].lower() + '_diff_temp.csv',
                 index=False, sep=',', quotechar='|')
@@ -50,77 +56,77 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             if len(oa_band_mutations) > 0:
                 temp_a_df, oa_temp_a_df, oa_temp_b_df = prepare_and_filter.prepare_ab_data(
                     temp_a_df, oa_in_a_df, oa_in_b_df,
-                    plan.band_col,
+                    plan.get('band_col'),
                     band_ab[0], oa_band_mutations[0][0], oa_band_mutations[0][1],
-                    plan.in_a_measurements_min_valid_pixel_percentage,
-                    plan.in_a_measurements_min_valid_pixel_percentage,
-                    plan.in_a_measurements_min_valid_pixel_percentage,
+                    plan.get('in_a_measurements_min_valid_pixel_percentage'),
+                    plan.get('in_a_measurements_min_valid_pixel_percentage'),
+                    plan.get('in_a_measurements_min_valid_pixel_percentage'),
                     oa_plot_measurements[0][0],
-                    plan.sr_measurements_date_filtering, plan)
+                    plan.get('sr_measurements_date_filtering, plan'))
             if oa_temp_a_df is not None:
                 oa_temp_a_df.to_csv(
-                    plan.plot_target + oa_band_mutations[0][
+                    plan.get('plot_target') + oa_band_mutations[0][
                     0
                 ].lower() + '_' + oa_plot_measurements[0][
                     0
-                ].lower() + '_' + plan.in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                ].lower() + '_' + plan.get('in_a_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
             if oa_temp_b_df is not None:
                 oa_temp_b_df.to_csv(
-                    plan.plot_target + oa_band_mutations[0][
+                    plan.get('plot_target') + oa_band_mutations[0][
                     1
                 ].lower() + '_' + oa_plot_measurements[0][
                     0
-                ].lower() + '_' + plan.in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                ].lower() + '_' + plan.get('in_a_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             if len(esa_oa_band_mutations) > 0:
                 temp_a_df, esa_oa_temp_a_df, esa_oa_temp_b_df = prepare_and_filter.prepare_ab_data(
                     temp_a_df, esa_oa_in_a_df, esa_oa_in_b_df,
-                    plan.band_col,
+                    plan.get('band_col'),
                     band_ab[0], esa_oa_band_mutations[0][0], esa_oa_band_mutations[0][1],
-                    plan.in_b_measurements_min_valid_pixel_percentage,
-                    plan.in_b_measurements_min_valid_pixel_percentage,
-                    plan.in_b_measurements_min_valid_pixel_percentage,
+                    plan.get('in_b_measurements_min_valid_pixel_percentage'),
+                    plan.get('in_b_measurements_min_valid_pixel_percentage'),
+                    plan.get('in_b_measurements_min_valid_pixel_percentage'),
                     esa_oa_plot_measurements[0][0],
-                    plan.sr_measurements_date_filtering, plan)
+                    plan.get('sr_measurements_date_filtering'), plan)
                 if esa_oa_temp_a_df is not None:
                     esa_oa_temp_a_df.to_csv(
-                        plan.plot_target + esa_oa_band_mutations[0][
+                        plan.get('plot_target') + esa_oa_band_mutations[0][
                         0
                     ].lower() + '_' + esa_oa_plot_measurements[0][
                         0
-                    ].lower() + '_' + plan.in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    ].lower() + '_' + plan.get('in_b_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
                 if esa_oa_temp_b_df is not None:
                     esa_oa_temp_b_df.to_csv(
-                        plan.plot_target + esa_oa_band_mutations[0][
+                        plan.get('plot_target') + esa_oa_band_mutations[0][
                         1
                     ].lower() + '_' + esa_oa_plot_measurements[0][
                         0
-                    ].lower() + '_' + plan.in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    ].lower() + '_' + plan.get('in_b_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             # Save data files of plot data.
             ga_product_label = ''
-            if plan.in_a_source_name.upper() == 'GA':
-                ga_product_label = plan.product_label
+            if plan.get('in_a_source_name').upper() == 'GA':
+                ga_product_label = plan.get('product_label')
             temp_a_df.to_csv(
-                plan.plot_target + band_ab[0].lower() + '_' + plot_measurements[
+                plan.get('plot_target') + band_ab[0].lower() + '_' + plot_measurements[
                     idx_band_ab
-                ][0].lower() + '_' + plan.in_a_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                ][0].lower() + '_' + plan.get('in_a_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
             temp_b_df.to_csv(
-                plan.plot_target + band_ab[1].lower() + '_' + plot_measurements[
+                plan.get('plot_target') + band_ab[1].lower() + '_' + plot_measurements[
                     idx_band_ab
-                ][0].lower() + '_' + plan.in_b_source_name.lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                ][0].lower() + '_' + plan.get('in_b_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
 
             # Do plotting.
             m_axs[0][0].set(
-                xlabel=plan.date_col,
-                ylabel=plan.measurements_plot_y_label,
+                xlabel=plan.get('date_col'),
+                ylabel=plan.get('measurements_plot_y_label'),
                 title=m_title,
-                xlim=[plan.plot_start_date, plan.plot_end_date]
+                xlim=[plan.get('plot_start_date'), plan.get('plot_end_date')]
             )
             ax = temp_a_df.plot(
-                kind=plan.measurements_plot_type, x=plan.date_col, y=plot_measurements[idx_band_ab][0], label=plot_measurements[
+                kind=plan.get('measurements_plot_type'), x=plan.get('date_col'), y=plot_measurements[idx_band_ab][0], label=plot_measurements[
                     idx_band_ab
-                ][1] + ' ' + plan.in_a_source_name + ga_product_label + ' ' + band_ab[2],
+                ][1] + ' ' + plan.get('in_a_source_name') + ga_product_label + ' ' + band_ab[2],
                 #marker='o',
                 ax=m_axs[0][0],
             #    sharex=m_axs[1][0]

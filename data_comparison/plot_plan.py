@@ -1,4 +1,4 @@
-"""Comparison Logic
+"""
 
 
 
@@ -10,7 +10,7 @@ import numpy as np
 
 
 def get_plans(app_configuration, subproject_name):
-    """Rules."""
+    """Return a flattened list of standardised plans."""
 
     ack = _make_app_config_kwargs(app_configuration, subproject_name)
     plans = []
@@ -19,7 +19,7 @@ def get_plans(app_configuration, subproject_name):
     print('Using these products:-')
     print(products)
     for product in products:
-        sites, ack = _get_sites(product, **ack)
+        sites = _get_sites(product, **ack)
         print('Processing these sites:-')
         print(sites)
         for site in sites:
@@ -81,7 +81,8 @@ def get_plans(app_configuration, subproject_name):
                 "in_c_data_path": ack.get('in_c_data_path'),
                 "in_c_prefix": ack.get('in_c_prefix'),
                 "in_c_same_sensor_date_filter_source": ack.get('in_c_same_sensor_date_filter_source'),
-                "product_label": get_product_label(product, **ack)
+                "product_label": get_product_label(product, **ack),
+                "spectral_indices": ack.get('spectral_indices'),
             }
 
             plans.append(plan_properties)
@@ -214,7 +215,7 @@ def _get_sites(s_product, **ack):
     print(site_paths)
     sites = list(map(lambda x: os.path.basename(os.path.normpath(x)), site_paths))
 
-    return (sites, ack)
+    return sites
 
 
 def get_product_label(s_product, **ack):
@@ -241,7 +242,7 @@ def get_in_site_path(inn, s_product, **ack):
     return site_path
 
 
-def _get_plot_titles(**ack):
+def _get_plot_titles(t_product, t_site, **ack):
     """Make plot titles."""
 
     m_title = ack.get(
@@ -252,20 +253,16 @@ def _get_plot_titles(**ack):
         'in_b_source_name'
     ) + ' ' + ack.get(
         'in_b_satellite_name'
-    ) + ack.get(
-        'product_label'
-    ) + ' at ' + ack.get(
-        'site'
-    )
+    ) + get_product_label(
+        t_product, **ack
+    ) + ' at ' + t_site
     oa_title = ack.get(
         'in_a_source_name'
     ) + ' ' + ack.get(
         'in_a_satellite_name'
-    ) + ack.get(
-        'product_label'
-    ) + ' at ' + ack.get(
-        'site'
-    )
+    ) + get_product_label(
+        t_product, **ack
+    ) + ' at ' + t_site
     i_title = m_title
     if len(ack.get(
         'in_c_source_name'
@@ -284,16 +281,12 @@ def _get_plot_titles(**ack):
             'in_c_source_name'
         ) + ' ' + ack.get(
             'in_c_satellite_name'
-        ) + ' at ' + ack.get(
-            'site'
-        )
+        ) + ' at ' + t_site
     esa_oa_title = ack.get(
         'in_b_source_name'
     ) + ' ' + ack.get(
         'in_b_satellite_name'
-    ) + ' at ' + ack.get(
-        'site'
-    )
+    ) + ' at ' + t_site
 
     return (m_title, oa_title, i_title, esa_oa_title)
 
