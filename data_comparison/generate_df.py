@@ -11,9 +11,12 @@ def p2f(x):
     return float(x.strip('%')) / 100
 
 
-def get_df_from_csv(file_path, rec_max):
+def get_df_from_csv(file_path, rec_max, no_p2f=False):
     """Read CSV file and return DataFrame."""
 
+    converters_spec = {'valid_pixel_percentage': p2f}
+    if no_p2f is not None and no_p2f:
+        converters_spec = {}
     new_df = None
     if file_path.is_file():
         new_df = pd.read_csv(
@@ -22,7 +25,8 @@ def get_df_from_csv(file_path, rec_max):
             sep=',',
             skipinitialspace=False,
             quotechar='|',
-            converters={'valid_pixel_percentage': p2f})
+            converters=converters_spec)
+            
         #print(new_df)
 
     return new_df

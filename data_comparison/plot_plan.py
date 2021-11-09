@@ -83,6 +83,7 @@ def get_plans(app_configuration, subproject_name):
                 "in_c_same_sensor_date_filter_source": ack.get('in_c_same_sensor_date_filter_source'),
                 "product_label": get_product_label(product, **ack),
                 "spectral_indices": ack.get('spectral_indices'),
+                "test_ref_path": get_test_ref_path(product, site, **ack),
             }
 
             plans.append(plan_properties)
@@ -154,6 +155,7 @@ def _make_app_config_kwargs(app_c, subp_name):
         "in_c_same_sensor_date_filter_source": ('C' in [*acd['COMPARISON_SOURCES']] and acd['COMPARISON_SOURCES']['C']['SAME_SENSOR_DATE_FILTER_SOURCE']) or '',
         "out_path": acd['OUT_BASE'],
         "rec_max": app_c['APP_SOURCE']['DATA_RECORD_MAX_LIMIT'],
+        "test_ref_base": acd['TEST_REF_BASE'],
     }
     ack['in_a_site_path'] = ack.get(
         'in_a_data_path'
@@ -295,6 +297,23 @@ def get_plot_target(t_product, t_site, **ack):
 
     plot_target = ack.get(
             'out_path'
+        ) + '/' + ack.get(
+            'in_a_source_name'
+        ).lower() + '_' + ack.get(
+            'in_a_satellite_name'
+        ).lower() + '_vs_' + ack.get(
+            'in_b_source_name'
+        ).lower() + '_' + ack.get(
+            'in_b_satellite_name'
+        ).lower() + '/' + t_product.lower() + '/' + t_site.lower() + '/'
+
+    return plot_target
+
+
+def get_test_ref_path(t_product, t_site, **ack):
+
+    plot_target = ack.get(
+            'test_ref_base'
         ) + '/' + ack.get(
             'in_a_source_name'
         ).lower() + '_' + ack.get(

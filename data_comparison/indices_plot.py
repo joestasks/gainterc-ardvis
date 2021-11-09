@@ -5,7 +5,9 @@
 """
 
 import os
+from pathlib import Path
 import pandas as pd
+from pandas._testing import assert_frame_equal
 import matplotlib.pyplot as plt
 
 
@@ -51,6 +53,13 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     ).lower() + '_' + plan.get(
                         'in_a_satellite_name'
                     ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                test_against_indices_ref(
+                    temp_a_df,
+                    spec_ind.lower(),
+                    plan.get('in_a_source_name').lower(),
+                    plan.get('in_a_satellite_name').lower(),
+                    generate_df,
+                    plan)
                 temp_b_df.to_csv(
                     plan.get(
                         'plot_target'
@@ -132,3 +141,24 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                 plt.close(i_fig)
 
     return True
+
+
+def test_against_indices_ref(temp_df, spec_ind, source_name, satellite_name,
+    generate_df, plan):
+
+    ref_file_path = plan.get(
+            'test_ref_path'
+        ) + spec_ind + '_' + source_name + '_' + satellite_name + '_temp.csv'
+    ref_df = generate_df.get_df_from_csv(Path(ref_file_path), plan.get('rec_max'), True)
+    ref_df[plan.get('date_col')] = pd.to_datetime(
+        ref_df[plan.get('date_col')],
+        format=plan.get('standardised_date_format'))
+    temp_df.reset_index(drop=True, inplace=True),
+    ref_df.reset_index(drop=True, inplace=True)
+    print('Verifying DataFrame against reference output: ' + ref_file_path)
+    test_result = (assert_frame_equal(
+        temp_df,
+        ref_df
+    ) is None and True) or False
+
+    return test_result
