@@ -15,7 +15,7 @@ def get_plans(app_configuration, subproject_name):
     ack = _make_app_config_kwargs(app_configuration, subproject_name)
     plans = []
 
-    products = _get_products(**ack)
+    products = get_products(**ack)
     print('Using these products:-')
     print(products)
     for product in products:
@@ -23,7 +23,7 @@ def get_plans(app_configuration, subproject_name):
         print('Processing these sites:-')
         print(sites)
         for site in sites:
-            m_title, oa_title, esa_oa_title, i_title = _get_plot_titles(product, site, **ack)
+            m_title, oa_title, i_title, esa_oa_title = _get_plot_titles(product, site, **ack)
             plan_properties = {
                 "product": product,
                 "site": site,
@@ -48,7 +48,7 @@ def get_plans(app_configuration, subproject_name):
                 "srm_esa_oa_title": esa_oa_title,
                 "indices_title": i_title,
                 "rec_max": ack.get('rec_max'),
-                "plot_sr_measurments": ack.get('plot_sr_measurements'),
+                "plot_sr_measurements": ack.get('plot_sr_measurements'),
                 "plot_indices": ack.get('plot_indices'),
                 "ga_bands": ack.get('ga_bands'),
                 "ga_band_mappings": ack.get('ga_band_mappings'),
@@ -61,8 +61,12 @@ def get_plans(app_configuration, subproject_name):
                 "in_a_measurements_min_valid_pixel_percentage": ack.get('in_a_measurements_min_valid_pixel_percentage'),
                 "in_b_measurements_min_valid_pixel_percentage": ack.get('in_b_measurements_min_valid_pixel_percentage'),
                 "in_c_measurements_min_valid_pixel_percentage": ack.get('in_c_measurements_min_valid_pixel_percentage'),
+                "in_a_indices_min_valid_pixel_percentage": ack.get('in_a_indices_min_valid_pixel_percentage'),
+                "in_b_indices_min_valid_pixel_percentage": ack.get('in_b_indices_min_valid_pixel_percentage'),
+                "in_c_indices_min_valid_pixel_percentage": ack.get('in_c_indices_min_valid_pixel_percentage'),
                 "sr_measurements_date_filtering": ack.get('sr_measurements_date_filtering'),
                 "date_col": ack.get('date_col'),
+                "band_col": ack.get('band_col'),
                 "standardised_date_format": ack.get('standardised_date_format'),
                 "esa_oa_mappings": ack.get('esa_oa_mappings'),
                 "plot_style": ack.get('plot_style'),
@@ -72,7 +76,7 @@ def get_plans(app_configuration, subproject_name):
                 "acd": ack.get('acd'),
                 "indices_col": ack.get('indices_col'),
                 "indices_plot_type": ack.get('indices_plot_type'),
-                "in_a_data_path": ack.get('in_base'),
+                "in_a_data_path": ack.get('in_a_data_path'),
                 "in_a_prefix": ack.get('in_a_prefix'),
                 "in_a_same_sensor_date_filter_source": ack.get('in_a_same_sensor_date_filter_source'),
                 "in_b_data_path": ack.get('in_b_data_path'),
@@ -83,7 +87,12 @@ def get_plans(app_configuration, subproject_name):
                 "in_c_same_sensor_date_filter_source": ack.get('in_c_same_sensor_date_filter_source'),
                 "product_label": get_product_label(product, **ack),
                 "spectral_indices": ack.get('spectral_indices'),
+                "test_ref_base": ack.get('test_ref_base'),
                 "test_ref_path": get_test_ref_path(product, site, **ack),
+                "indices_same_sensor_date_filtering": ack.get('indices_same_sensor_date_filtering'),
+                "in_a_same_sensor_date_filter_source": ack.get('in_a_same_sensor_date_filter_source'),
+                "in_b_same_sensor_date_filter_source": ack.get('in_b_same_sensor_date_filter_source'),
+                "in_c_same_sensor_date_filter_source": ack.get('in_c_same_sensor_date_filter_source'),
             }
 
             plans.append(plan_properties)
@@ -195,7 +204,7 @@ def _make_app_config_kwargs(app_c, subp_name):
     return ack
 
 
-def _get_products(**ack):
+def get_products(**ack):
 
     products = None
     if ack.get('in_a_product') is None:
@@ -207,6 +216,7 @@ def _get_products(**ack):
 
 
 def _get_sites(s_product, **ack):
+
     site_paths = None
     if ack.get('in_a_site') is None:
         site_paths = list(Path(get_in_site_path('a', s_product, **ack)).glob('**'))
@@ -221,6 +231,7 @@ def _get_sites(s_product, **ack):
 
 
 def get_product_label(s_product, **ack):
+
     product_label = ''
     if s_product:
         product_label = ' for ' + ack.get('acd')['GA_ALGORITHMS'][s_product]
@@ -229,6 +240,7 @@ def get_product_label(s_product, **ack):
 
 
 def get_in_site_path(inn, s_product, **ack):
+
     site_path = ack.get(f"in_{inn}_site_path")
     if ack.get(f"in_{inn}_source_name").upper() == 'GA':
         site_path = ack.get(

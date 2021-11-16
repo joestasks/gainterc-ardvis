@@ -6,13 +6,14 @@
 
 import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plot_plan, plan, **ack):
+def plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plot_plan, **ack):
 
-    plt.style.use(plan.get('plot_style'))
     plt.close('all')
+    plt.style.use(ack.get('plot_style'))
     temp_a_df = None
     temp_b_df = None
     oa_temp_a_df = None
@@ -45,7 +46,7 @@ def plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plot_plan, plan, **ack):
                 xlabel=ack.get('date_col'),
                 ylabel='NBAR/LAM',
                 title='NBAR / LAM Ratio for ' + ((ack.get('in_a_source_name') == 'GA' and ga_band.split('_nbar_')[1]) or ga_band) + ' at ' + site.replace('NBAR_', ''),
-                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+                xlim=[np.datetime64(ack.get('plot_start_date')), np.datetime64(ack.get('plot_end_date'))]
             )
             if temp_a_df is not None:
                 ax = res.plot(
@@ -72,7 +73,7 @@ def plot_nbar_lam_ratio(nbar_ratio_dfs, lam_ratio_dfs, plot_plan, plan, **ack):
                 xlabel=ack.get('date_col'),
                 ylabel=ack.get('oa_plot_y_label'),
                 title='GA Additional Attribute(s)',
-                xlim=[ack.get('plot_start_date'), ack.get('plot_end_date')]
+                xlim=[np.datetime64(ack.get('plot_start_date')), np.datetime64(ack.get('plot_end_date'))]
             )
             if oa_temp_a_df is not None:
                 ax = oa_temp_a_df.plot(

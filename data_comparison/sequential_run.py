@@ -27,9 +27,11 @@ def all(plans, **ack):
     sr_measurements_plot = importlib.import_module(subproject_name + '.sr_measurements_plot')
     indices_plot = importlib.import_module(subproject_name + '.indices_plot')
     nbar_lam_ratio_plot = importlib.import_module(subproject_name + '.nbar_lam_ratio_plot')
+    plot_plan = importlib.import_module(subproject_name + '.plot_plan')
     sys.path.remove('./')
 
     sr_diff_all_sites = {}
+    sr_diff_all_sites_band_mutations = {}
     nbar_ratio_dfs = {}
     lam_ratio_dfs = {}
 
@@ -113,6 +115,7 @@ def all(plans, **ack):
                 plan.get('srm_esa_oa_title'),
                 SR_DIFF_ALL_SITES_HEADER,
                 prepare_and_filter,
+                generate_df,
                 plan)
             if plan.get('product').upper() == 'NBAR':
                 nbar_ratio_dfs['NBAR_' + plan.get('site')] = ratio_dfs
@@ -120,6 +123,7 @@ def all(plans, **ack):
                 lam_ratio_dfs['NBAR_' + plan.get('site')] = ratio_dfs
             else:
                 False  # discard
+            sr_diff_all_sites_band_mutations[plan.get('product')] = band_mutations
 
         if plan.get('plot_indices'):
             indices_plot.generate_indices_plots(
@@ -127,14 +131,21 @@ def all(plans, **ack):
                 in_b_indices_df,
                 in_c_indices_df,
                 plan.get('indices_title'),
-                prepare_and_filter, generate_df, plan)
+                prepare_and_filter,
+                generate_df,
+                plan)
 
-        if plan.get('plot_sr_measurements'):
-            prepare_and_filter.prepare_min_max_mean(
-                sr_diff_all_sites, band_mutations, SR_DIFF_SUMMARY_HEADER, plan)
+    if ack.get('plot_sr_measurements'):
+        prepare_and_filter.prepare_min_max_mean(
+            sr_diff_all_sites,
+            sr_diff_all_sites_band_mutations,
+            SR_DIFF_SUMMARY_HEADER,
+            plot_plan,
+            generate_df,
+            **ack)
 
-        if plan.get('plot_sr_measurements'):
-            nbar_lam_ratio_plot.plot_nbar_lam_ratio(
-                nbar_ratio_dfs, lam_ratio_dfs, plan, **ack)
+    if ack.get('plot_sr_measurements'):
+        nbar_lam_ratio_plot.plot_nbar_lam_ratio(
+            nbar_ratio_dfs, lam_ratio_dfs, plot_plan, **ack)
 
     return True

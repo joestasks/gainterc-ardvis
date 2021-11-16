@@ -7,6 +7,7 @@
 from pathlib import Path
 import pandas as pd
 pd.options.mode.chained_assignment = None
+from pandas._testing import assert_frame_equal
 import numpy as np
 
 
@@ -181,9 +182,7 @@ def apply_indices_same_sensor_date_filtering(
         'in_b_same_sensor_date_filter_source'
     ) + '_' + plan.get(
         'in_b_satellite_name'
-    ) + (
-        lambda x: (x is not None and '_' + x) or ('')
-    )(plan.get('in_b_product')) + '/'
+    ) + '/'
     in_c_site_path = ''
     if plan.get('in_c_source_name'):
         in_c_site_path = plan.get(
@@ -194,9 +193,7 @@ def apply_indices_same_sensor_date_filtering(
             'in_c_same_sensor_date_filter_source'
         ) + '_' + plan.get(
             'in_c_satellite_name'
-        ) + (
-            lambda x: (len(x) > 0 and '_' + x) or ('')
-        )(plan.get('in_c_product')) + '/'
+        ) + '/'
     if plan.get('in_a_same_sensor_date_filter_source').upper() == 'GA':
         in_a_site_path = plan.get(
             'in_a_data_path'
@@ -280,36 +277,77 @@ def apply_indices_same_sensor_date_filtering(
     return (new_temp_a_df, new_temp_b_df, new_temp_c_df)
 
 
-def prepare_min_max_mean(sr_diff_all_sites, band_mutations, msr_diff_header, plan):
+def prepare_min_max_mean(sr_diff_all_sites, band_mutations, msr_diff_header,
+    plot_plan, generate_df, **ack):
 
-    all_sites_df = sr_diff_all_sites[
-        plan.get('product')
-    ][
-        sr_diff_all_sites[
-            plan.get('product')
-        ]['mean'].notna()
-    ]
-    all_sites_df.to_csv(
-        plan.get(
-            'all_sites_plot_target'
-        ) + 'all_sites_msr_diff_temp.csv',
-        index=False, sep=',', quotechar='|')
-    new_rows = []
-    for idx_band_ab, band_ab in enumerate(band_mutations):
-        band_id_df = all_sites_df.loc[all_sites_df['band'] == band_ab[0] + ':' + band_ab[1]]
-        band_id_df['mean'] = pd.to_numeric(band_id_df['mean'])
-        band_id_df['acq'] = pd.to_numeric(band_id_df['acq'])
-        band_id_df['mean_x_acq'] = band_id_df['mean'] * band_id_df['acq']
-        total_mean = band_id_df['mean_x_acq'].sum()
-        total_acq = band_id_df['acq'].sum()
-        all_sites_mean = total_mean / total_acq
-        new_rows.append([band_ab[0] + ':' + band_ab[1], band_id_df['min'].min(), band_id_df['max'].max(), all_sites_mean, str(total_acq)])
+    products = plot_plan.get_products(**ack)
+    for product in products:
+        all_sites_df = sr_diff_all_sites[
+            product
+        ][
+            sr_diff_all_sites[
+                product
+            ]['mean'].notna()
+        ]
+        all_sites_df.to_csv(
+            plot_plan.get_all_sites_plot_target(
+                product, **ack
+            ) + 'all_sites_msr_diff_temp.csv',
+            index=False, sep=',', quotechar='|')
+        test_against_msr_diff_ref(
+            all_sites_df,
+            product,
+            'all_sites_msr_diff_temp.csv',
+            plot_plan,
+            generate_df,
+            **ack)
+        new_rows = []
+        for idx_band_ab, band_ab in enumerate(band_mutations.get(product)):
+            band_id_df = all_sites_df.loc[all_sites_df['band'] == band_ab[0] + ':' + band_ab[1]]
+            band_id_df['mean'] = pd.to_numeric(band_id_df['mean'])
+            band_id_df['acq'] = pd.to_numeric(band_id_df['acq'])
+            band_id_df['mean_x_acq'] = band_id_df['mean'] * band_id_df['acq']
+            total_mean = band_id_df['mean_x_acq'].sum()
+            total_acq = band_id_df['acq'].sum()
+            all_sites_mean = total_mean / total_acq
+            new_rows.append([band_ab[0] + ':' + band_ab[1], band_id_df['min'].min(), band_id_df['max'].max(), all_sites_mean, str(total_acq)])
 
-    msr_diff_df = pd.DataFrame(new_rows, columns=msr_diff_header)
-    msr_diff_df.to_csv(
-        plan.get(
-            'all_sites_plot_target'
-        ) + 'summary_msr_diff_temp.csv',
-        index=False, sep=',', quotechar='|')
+        msr_diff_df = pd.DataFrame(new_rows, columns=msr_diff_header)
+        msr_diff_df.to_csv(
+            plot_plan.get_all_sites_plot_target(
+                product, **ack
+            ) + 'summary_msr_diff_temp.csv',
+            index=False, sep=',', quotechar='|')
+        test_against_msr_diff_ref(
+            msr_diff_df,
+            product,
+            'summary_msr_diff_temp.csv',
+            plot_plan,
+            generate_df,
+            **ack)
 
     return True
+
+
+def test_against_msr_diff_ref(temp_df, product, file_name,
+    plot_plan, generate_df, **ack):
+
+    test_result = False
+    if ack.get('test_ref_base') is not None:
+        ref_file_path = plot_plan.get_test_ref_path(
+            product, '.', **ack
+        ) + file_name
+        ref_df = generate_df.get_df_from_csv(Path(ref_file_path), ack.get('rec_max'), True)
+        if temp_df is not None and ref_df is not None:
+            ref_df[ack.get('date_col')] = pd.to_datetime(
+                ref_df[ack.get('date_col')],
+                format=ack.get('standardised_date_format'))
+            #clean_index_temp_df = temp_df.reset_index(drop=True)
+            #ref_df.reset_index(drop=True, inplace=True)
+            print('Verifying DataFrame against reference output: ' + ref_file_path)
+            test_result = (assert_frame_equal(
+                temp_df,
+                ref_df
+            ) is None and True) or False
+
+    return test_result

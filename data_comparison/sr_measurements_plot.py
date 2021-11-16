@@ -5,7 +5,9 @@
 """
 
 import os
+from pathlib import Path
 import pandas as pd
+from pandas._testing import assert_frame_equal
 import matplotlib.pyplot as plt
 
 
@@ -16,7 +18,8 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     esa_oa_in_a_df, esa_oa_in_b_df,
     esa_oa_band_mutations, esa_oa_plot_measurements,
     sr_diff_all_sites,
-    m_title, oa_title, esa_oa_title, msr_diff_header, prepare_and_filter, plan):
+    m_title, oa_title, esa_oa_title, msr_diff_header,
+    prepare_and_filter, generate_df, plan):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
     plt.style.use(plan.get('plot_style'))
@@ -62,7 +65,7 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                     plan.get('in_a_measurements_min_valid_pixel_percentage'),
                     plan.get('in_a_measurements_min_valid_pixel_percentage'),
                     oa_plot_measurements[0][0],
-                    plan.get('sr_measurements_date_filtering, plan'))
+                    plan.get('sr_measurements_date_filtering'), plan)
             if oa_temp_a_df is not None:
                 oa_temp_a_df.to_csv(
                     plan.get('plot_target') + oa_band_mutations[0][
@@ -111,10 +114,24 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
                 plan.get('plot_target') + band_ab[0].lower() + '_' + plot_measurements[
                     idx_band_ab
                 ][0].lower() + '_' + plan.get('in_a_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+            test_against_sr_measurements_ref(
+                temp_a_df,
+                band_ab[0].lower(),
+                plot_measurements[idx_band_ab][0].lower(),
+                plan.get('in_a_source_name').lower(),
+                generate_df,
+                plan)
             temp_b_df.to_csv(
                 plan.get('plot_target') + band_ab[1].lower() + '_' + plot_measurements[
                     idx_band_ab
                 ][0].lower() + '_' + plan.get('in_b_source_name').lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+            test_against_sr_measurements_ref(
+                temp_b_df,
+                band_ab[0].lower(),
+                plot_measurements[idx_band_ab][0].lower(),
+                plan.get('in_b_source_name').lower(),
+                generate_df,
+                plan)
 
             # Do plotting.
             m_axs[0][0].set(
@@ -232,3 +249,27 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
             )
 
     return ratio_dfs
+
+
+def test_against_sr_measurements_ref(temp_df, band, measurement,
+    source_name, generate_df, plan):
+
+    test_result = False
+    if plan.get('test_ref_base') is not None:
+        ref_file_path = plan.get(
+                'test_ref_path'
+            ) + band + '_' + measurement + '_' + source_name + '_temp.csv'
+        ref_df = generate_df.get_df_from_csv(Path(ref_file_path), plan.get('rec_max'), True)
+        if temp_df is not None and ref_df is not None:
+            ref_df[plan.get('date_col')] = pd.to_datetime(
+                ref_df[plan.get('date_col')],
+                format=plan.get('standardised_date_format'))
+            #clean_index_temp_df = temp_df.reset_index(drop=True)
+            #ref_df.reset_index(drop=True, inplace=True)
+            print('Verifying DataFrame against reference output: ' + ref_file_path)
+            test_result = (assert_frame_equal(
+                temp_df,
+                ref_df
+            ) is None and True) or False
+
+    return test_result

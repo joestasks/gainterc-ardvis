@@ -68,6 +68,13 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                     ).lower() + '_' + plan.get(
                         'in_b_satellite_name'
                     ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                test_against_indices_ref(
+                    temp_b_df,
+                    spec_ind.lower(),
+                    plan.get('in_b_source_name').lower(),
+                    plan.get('in_b_satellite_name').lower(),
+                    generate_df,
+                    plan)
                 if in_c_indices_df is not None and temp_c_df is not None:
                     temp_c_df.to_csv(
                         plan.get(
@@ -77,6 +84,13 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
                         ).lower() + '_' + plan.get(
                             'in_c_satellite_name'
                         ).lower() + '_temp.csv', index=False, sep=',', quotechar='|')
+                    test_against_indices_ref(
+                        temp_c_df,
+                        spec_ind.lower(),
+                        plan.get('in_c_source_name').lower(),
+                        plan.get('in_c_satellite_name').lower(),
+                        generate_df,
+                        plan)
 
                 # Do plotting.
                 i_axs[0][0].set(
@@ -146,19 +160,22 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
 def test_against_indices_ref(temp_df, spec_ind, source_name, satellite_name,
     generate_df, plan):
 
-    ref_file_path = plan.get(
-            'test_ref_path'
-        ) + spec_ind + '_' + source_name + '_' + satellite_name + '_temp.csv'
-    ref_df = generate_df.get_df_from_csv(Path(ref_file_path), plan.get('rec_max'), True)
-    ref_df[plan.get('date_col')] = pd.to_datetime(
-        ref_df[plan.get('date_col')],
-        format=plan.get('standardised_date_format'))
-    temp_df.reset_index(drop=True, inplace=True),
-    ref_df.reset_index(drop=True, inplace=True)
-    print('Verifying DataFrame against reference output: ' + ref_file_path)
-    test_result = (assert_frame_equal(
-        temp_df,
-        ref_df
-    ) is None and True) or False
+    test_result = False
+    if plan.get('test_ref_base') is not None:
+        ref_file_path = plan.get(
+                'test_ref_path'
+            ) + spec_ind + '_' + source_name + '_' + satellite_name + '_temp.csv'
+        ref_df = generate_df.get_df_from_csv(Path(ref_file_path), plan.get('rec_max'), True)
+        if temp_df is not None and ref_df is not None:
+            ref_df[plan.get('date_col')] = pd.to_datetime(
+                ref_df[plan.get('date_col')],
+                format=plan.get('standardised_date_format'))
+            #clean_index_temp_df = temp_df.reset_index(drop=True)
+            #ref_df.reset_index(drop=True, inplace=True)
+            print('Verifying DataFrame against reference output: ' + ref_file_path)
+            test_result = (assert_frame_equal(
+                temp_df,
+                ref_df
+            ) is None and True) or False
 
     return test_result
