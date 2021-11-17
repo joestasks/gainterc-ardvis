@@ -19,7 +19,8 @@ APP_SOURCE:
             DATA:
 
                 # Data input base directory.
-                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref/output_60_and_NBR_sites
+                #IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref/output_60_and_NBR_sites
+                IN_BASE: /Users/joejelbart/Documents/workspace/gainterc-ardvis/test/qa_ref_input/output_60_and_NBR_sites
 
                 COMPARISON_SOURCES:
                     A:
