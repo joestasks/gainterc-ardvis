@@ -74,8 +74,8 @@ APP_SOURCE:
                         INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
                 # Visualisation (plot) output base directory.
-                #OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
-                OUT_BASE: /Users/joejelbart/Documents/workspace/gainterc-ardvis/test/qa_ref_output
+                OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
+                TEST_REF_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/test/ref/qa_ref_output
 
                 PLOT_SR_MEASUREMENTS: False
                 PLOT_INDICES: True
