@@ -19,7 +19,8 @@ APP_SOURCE:
             DATA:
 
                 # Data input base directory.
-                IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref/output_60_and_NBR_sites
+                #IN_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/ref/output_60_and_NBR_sites
+                IN_BASE: /Users/joejelbart/Documents/workspace/gainterc-ardvis/test/qa_ref_input/output_60_and_NBR_sites
 
                 COMPARISON_SOURCES:
                     A:
@@ -73,7 +74,8 @@ APP_SOURCE:
                         INDICES_MIN_VALID_PIXEL_PERCENTAGE: 1.0
 
                 # Visualisation (plot) output base directory.
-                OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
+                #OUT_BASE: /Users/joejelbart/Documents/workspace/data/ga_interc/out
+                OUT_BASE: /Users/joejelbart/Documents/workspace/gainterc-ardvis/test/qa_ref_output
 
                 PLOT_SR_MEASUREMENTS: False
                 PLOT_INDICES: True
