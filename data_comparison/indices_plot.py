@@ -15,8 +15,8 @@ def generate_indices_plots(in_a_indices_df, in_b_indices_df, in_c_indices_df,
     i_title, prepare_and_filter, generate_df, plan):
     """Plot indices and write the DataFrames used to name matched data files."""
 
-    plt.style.use(plan.get('plot_style'))
     plt.close('all')
+    plt.style.use(plan.get('plot_style'))
 
     if in_a_indices_df is not None and in_b_indices_df is not None:
         for idx_spec_ind, spec_ind in enumerate(plan.get('spectral_indices')):

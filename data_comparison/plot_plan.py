@@ -334,7 +334,9 @@ def get_test_ref_path(t_product, t_site, **ack):
             'in_b_source_name'
         ).lower() + '_' + ack.get(
             'in_b_satellite_name'
-        ).lower() + '/' + t_product.lower() + '/' + t_site.lower() + '/'
+        ).lower() + '/' + t_product.lower() + '/' + (
+            (t_site is not None and t_site.lower() + '/') or ''
+        )
 
     return plot_target
 

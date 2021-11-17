@@ -335,18 +335,17 @@ def test_against_msr_diff_ref(temp_df, product, file_name,
     test_result = False
     if ack.get('test_ref_base') is not None:
         ref_file_path = plot_plan.get_test_ref_path(
-            product, '.', **ack
+            product, None, **ack
         ) + file_name
+        #print(ref_file_path)
         ref_df = generate_df.get_df_from_csv(Path(ref_file_path), ack.get('rec_max'), True)
         if temp_df is not None and ref_df is not None:
-            ref_df[ack.get('date_col')] = pd.to_datetime(
-                ref_df[ack.get('date_col')],
-                format=ack.get('standardised_date_format'))
-            #clean_index_temp_df = temp_df.reset_index(drop=True)
-            #ref_df.reset_index(drop=True, inplace=True)
+            ref_df['acq'] = ref_df['acq'].astype(str)
+            clean_index_temp_df = temp_df.reset_index(drop=True)
+            ref_df.reset_index(drop=True, inplace=True)
             print('Verifying DataFrame against reference output: ' + ref_file_path)
             test_result = (assert_frame_equal(
-                temp_df,
+                clean_index_temp_df,
                 ref_df
             ) is None and True) or False
 

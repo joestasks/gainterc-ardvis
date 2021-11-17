@@ -22,8 +22,8 @@ def generate_measurements_plots(in_a_measurements_df, in_b_measurements_df,
     prepare_and_filter, generate_df, plan):
     """Plot measurements and write the DataFrames used to name matched data files."""
 
-    plt.style.use(plan.get('plot_style'))
     plt.close('all')
+    plt.style.use(plan.get('plot_style'))
     temp_a_df = None
     temp_b_df = None
     oa_temp_a_df = None
