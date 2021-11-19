@@ -33,6 +33,8 @@ IN_BASE: /home/myname/workspace/gainterc-ardvis/test/qa_ref_input/output_60_and_
 TEST_REF_BASE: /home/myname/workspace/gainterc-ardvis/test/qa_ref_output
 ```
 
+Turn off QA reference testing by commenting out TEST_REF_BASE.
+
 You should see lines similar to the following on STDOUT:
 
 ```code
